@@ -1,0 +1,24 @@
+# swagger_parser の設定。
+# OpenAPI 仕様（api/openapi.yaml）から Dart の DTO と dio クライアントを生成する。
+#
+# 生成物は「ソース」として扱いコミットする（build_runner が作る *.g.dart のみ .gitignore）。
+# DTO は freezed ではなく json_serializable のプレーンクラスとして生成し、
+# ドメインの freezed エンティティへは境界（infrastructure）でマッピングする。
+#
+# 生成コマンド:
+#   dart pub global run swagger_parser
+swagger_parser:
+  schema_path: api/openapi.yaml
+  output_directory: lib/src/api
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: BookReviewApiClient
+  client_postfix: Api
+  put_clients_in_folder: true
+  put_in_folder: false
+  enums_to_json: true
+  unknown_enum_value: true
+  use_freezed3: false
+  override_from_json: false
+  squash_clients: false
