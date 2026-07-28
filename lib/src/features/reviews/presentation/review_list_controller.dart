@@ -1,4 +1,3 @@
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/save_review_use_case.dart';
@@ -32,8 +31,11 @@ class ReviewListController extends _$ReviewListController {
   }
 
   /// プルリフレッシュ等での再取得。
+  ///
+  /// Riverpod 3 では loading 遷移時に直前値の保持がフレームワーク側で扱われ、
+  /// `copyWithPrevious` は内部APIになった。UIのスピナーは `RefreshIndicator` が担うため、
+  /// ここでは `guard` で結果（data/error）のみを反映する。
   Future<void> refresh() async {
-    state = const AsyncLoading<List<Review>>().copyWithPrevious(state);
     state = await AsyncValue.guard(
       () => _repository.fetchAll(forceRefresh: true),
     );
@@ -44,7 +46,7 @@ class ReviewListController extends _$ReviewListController {
   /// 仮の [Review] を先頭に差し込んで即座にUIへ反映し、サーバ採番の結果で置き換える。
   /// 失敗時は差し込みを取り消して例外を再送出する（呼び出し側で通知）。
   Future<void> add(ReviewDraft draft) async {
-    final current = state.valueOrNull ?? const [];
+    final current = state.value ?? const [];
     final now = DateTime.now();
     final optimistic = Review(
       id: 'temp-${now.microsecondsSinceEpoch}',
@@ -69,7 +71,7 @@ class ReviewListController extends _$ReviewListController {
 
   /// 既存レビューを更新する（楽観的更新）。
   Future<void> edit(String id, ReviewDraft draft) async {
-    final current = state.valueOrNull ?? const [];
+    final current = state.value ?? const [];
     final index = current.indexWhere((r) => r.id == id);
     if (index < 0) {
       await ref.read(saveReviewUseCaseProvider)(id: id, draft: draft);
@@ -98,7 +100,7 @@ class ReviewListController extends _$ReviewListController {
 
   /// レビューを削除する（楽観的更新）。
   Future<void> remove(String id) async {
-    final current = state.valueOrNull ?? const [];
+    final current = state.value ?? const [];
     state = AsyncData(current.where((r) => r.id != id).toList());
     try {
       await _repository.delete(id);
@@ -116,7 +118,7 @@ class ReviewListController extends _$ReviewListController {
 /// 一覧から id で1件を引く。一覧に無ければサーバから取得する（詳細画面用）。
 @riverpod
 Future<Review> reviewById(Ref ref, String id) async {
-  final list = ref.watch(reviewListControllerProvider).valueOrNull;
+  final list = ref.watch(reviewListControllerProvider).value;
   final found = list?.where((r) => r.id == id).firstOrNull;
   if (found != null) {
     return found;

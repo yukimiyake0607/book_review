@@ -24,7 +24,7 @@ class ReviewDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('レビュー詳細'),
         actions: [
-          if (review.valueOrNull != null)
+          if (review.value != null)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               tooltip: '編集',
