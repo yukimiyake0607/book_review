@@ -1,4 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'app_env.g.dart';
 
 /// アプリの実行環境（flavor）。
 ///
@@ -43,9 +46,9 @@ class AppEnv {
 
 /// 現在の環境を供給する Provider。
 ///
-/// エントリポイントで `overrideWithValue` により具体値を注入する。既定は dev。
-final appEnvProvider = Provider<AppEnv>(
-  (ref) => throw UnimplementedError(
-    'appEnvProvider must be overridden in the entry point (main_dev/main_prod).',
-  ),
+/// エントリポイントで `overrideWithValue` により具体値を注入する。
+/// 実体は起動時に必ず注入されるため、既定実装は明示的に例外を投げる。
+@Riverpod(keepAlive: true)
+AppEnv appEnv(Ref ref) => throw UnimplementedError(
+  'appEnvProvider must be overridden in the entry point (main_dev/main_prod).',
 );

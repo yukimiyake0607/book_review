@@ -9,7 +9,7 @@ part 'review.freezed.dart';
 /// 一覧表示のため書籍名・サムネイルを非正規化して保持する。
 /// API/DB の表現（DTO）とは分離し、境界で相互変換する。
 @freezed
-class Review with _$Review {
+abstract class Review with _$Review {
   const factory Review({
     required String id,
     required String bookId,

@@ -1,4 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/save_review_use_case.dart';
 import '../domain/review.dart';
@@ -6,11 +7,14 @@ import '../domain/review_draft.dart';
 import '../domain/review_repository.dart';
 import '../infrastructure/review_repository_impl.dart';
 
+part 'review_list_controller.g.dart';
+
 /// レビュー一覧の状態を保持する中心的なコントローラ。
 ///
 /// 一覧が「レビューの現在状態」の単一の入れ物であり、作成/更新/削除の
 /// **楽観的更新**もここで行う（UIを即時更新し、失敗したら直前状態へロールバックする）。
-class ReviewListController extends AsyncNotifier<List<Review>> {
+@Riverpod(keepAlive: true)
+class ReviewListController extends _$ReviewListController {
   ReviewRepository get _repository => ref.read(reviewRepositoryProvider);
 
   @override
@@ -109,20 +113,13 @@ class ReviewListController extends AsyncNotifier<List<Review>> {
   }
 }
 
-final reviewListControllerProvider =
-    AsyncNotifierProvider<ReviewListController, List<Review>>(
-      ReviewListController.new,
-    );
-
 /// 一覧から id で1件を引く。一覧に無ければサーバから取得する（詳細画面用）。
-final reviewByIdProvider = FutureProvider.autoDispose.family<Review, String>((
-  ref,
-  id,
-) async {
+@riverpod
+Future<Review> reviewById(Ref ref, String id) async {
   final list = ref.watch(reviewListControllerProvider).valueOrNull;
   final found = list?.where((r) => r.id == id).firstOrNull;
   if (found != null) {
     return found;
   }
   return ref.watch(reviewRepositoryProvider).fetchById(id);
-});
+}

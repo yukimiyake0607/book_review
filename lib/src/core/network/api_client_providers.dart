@@ -1,14 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../api/book_review_api_client.dart';
 import '../env/app_env.dart';
+
+part 'api_client_providers.g.dart';
 
 /// Dio インスタンスを供給する Provider。
 ///
 /// ベースURLは環境（[appEnvProvider]）から取り、タイムアウトとログを設定する。
 /// テスト時はこの Provider をオーバーライドしてモック用の Dio に差し替える。
-final dioProvider = Provider<Dio>((ref) {
+@Riverpod(keepAlive: true)
+Dio dio(Ref ref) {
   final env = ref.watch(appEnvProvider);
   final dio = Dio(
     BaseOptions(
@@ -23,9 +27,9 @@ final dioProvider = Provider<Dio>((ref) {
     dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
   }
   return dio;
-});
+}
 
 /// OpenAPI から生成した API クライアントを供給する Provider。
-final apiClientProvider = Provider<BookReviewApiClient>((ref) {
-  return BookReviewApiClient(ref.watch(dioProvider));
-});
+@Riverpod(keepAlive: true)
+BookReviewApiClient apiClient(Ref ref) =>
+    BookReviewApiClient(ref.watch(dioProvider));

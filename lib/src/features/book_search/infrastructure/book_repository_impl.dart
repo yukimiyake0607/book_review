@@ -1,4 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../api/book_review_api_client.dart';
 import '../../../core/error/error_mapper.dart';
@@ -6,6 +7,8 @@ import '../../../core/network/api_client_providers.dart';
 import '../domain/book.dart';
 import '../domain/book_repository.dart';
 import 'book_mapper.dart';
+
+part 'book_repository_impl.g.dart';
 
 /// [BookRepository] の実装。生成 API クライアントを呼び、DTO をドメインへ変換する。
 class BookRepositoryImpl implements BookRepository {
@@ -26,6 +29,6 @@ class BookRepositoryImpl implements BookRepository {
 }
 
 /// [BookRepository] を供給する Provider。
-final bookRepositoryProvider = Provider<BookRepository>((ref) {
-  return BookRepositoryImpl(ref.watch(apiClientProvider));
-});
+@Riverpod(keepAlive: true)
+BookRepository bookRepository(Ref ref) =>
+    BookRepositoryImpl(ref.watch(apiClientProvider));

@@ -45,7 +45,7 @@ lib/
     ├── routing/                # go_router 定義
     └── features/
         ├── book_search/        # F-01 書籍検索
-        │   ├── presentation/   # 画面・Widget・Riverpod Notifier（AsyncValue）
+        │   ├── presentation/   # 画面・Widget・Riverpod Notifier（@riverpod / AsyncValue）
         │   ├── application/    # ユースケース
         │   ├── domain/         # エンティティ・値オブジェクト・リポジトリIF
         │   └── infrastructure/ # 生成APIクライアント・DTO・リポジトリ実装
@@ -71,8 +71,8 @@ API仕様を [`api/openapi.yaml`](api/openapi.yaml) で定義し、そこから 
 
 | 領域 | 技術 |
 |---|---|
-| フレームワーク | Flutter（stable）/ Dart |
-| 状態管理 | Riverpod（hooks_riverpod、AsyncValue中心。型付き Notifier を手書き） |
+| フレームワーク | Flutter（`mise` でバージョン固定）/ Dart |
+| 状態管理 | Riverpod（hooks_riverpod、AsyncValue中心）＋ `@riverpod` コード生成（riverpod_generator） |
 | アーキテクチャ | レイヤード＋依存性逆転（フィーチャーファースト） |
 | API定義 | OpenAPI + コード生成（swagger_parser）+ モックサーバ（Prism） |
 | モデル | freezed / json_serializable（コード生成） |
@@ -80,7 +80,7 @@ API仕様を [`api/openapi.yaml`](api/openapi.yaml) で定義し、そこから 
 | ローカルキャッシュ | shared_preferences |
 | エラー設計 | sealed class による Result 表現 |
 | CI | GitHub Actions（analyze → format → test → build） |
-| Lint | analysis_options.yaml（型の厳格化＋可読性ルール） |
+| Lint | analysis_options.yaml（型の厳格化＋可読性ルール）＋ riverpod_lint（custom_lint） |
 
 ## テスト
 
@@ -116,6 +116,11 @@ AIの出力をそのまま採用せず、レビューして書き直した箇所
 ```bash
 git clone https://github.com/yukimiyake0607/book_review.git
 cd book_review
+
+# Flutter/Node のバージョンは mise で固定している（fvm は不使用）
+mise trust
+mise install
+
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 
@@ -126,7 +131,10 @@ npx @stoplight/prism-cli mock api/openapi.yaml
 flutter run -t lib/main_dev.dart
 ```
 
-要件：Flutter（stable最新）/ Xcode / Node.js（Prism 実行用）
+要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter を固定）/ Xcode / Node.js（Prism 実行用）
+
+> Riverpod のコード生成に必要なツールチェーン整合のため、`analyzer` 等を
+> `dependency_overrides` で固定しています（理由は [ADR-0001](docs/adr/0001-state-management.md)）。
 
 ## ロードマップ
 

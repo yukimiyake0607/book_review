@@ -7,7 +7,7 @@ part 'book.freezed.dart';
 /// 外部書籍データベース由来のデータだが、ドメインでは API の DTO とは切り離した
 /// 不変モデルとして扱う（変換は infrastructure 層で行う）。
 @freezed
-class Book with _$Book {
+abstract class Book with _$Book {
   const factory Book({
     required String id,
     required String title,
