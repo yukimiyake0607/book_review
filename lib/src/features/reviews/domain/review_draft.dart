@@ -9,7 +9,7 @@ part 'review_draft.freezed.dart';
 /// 既存の [Review] と分けることで、「登録済みの事実」と「これから登録したい内容」を
 /// 型で区別する。バリデーション済みの [Rating] を持つため、不正値は構築時点で弾かれる。
 @freezed
-class ReviewDraft with _$ReviewDraft {
+abstract class ReviewDraft with _$ReviewDraft {
   const factory ReviewDraft({
     required String bookId,
     required String bookTitle,

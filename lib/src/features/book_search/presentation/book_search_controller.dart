@@ -1,13 +1,16 @@
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/search_books_use_case.dart';
 import '../domain/book.dart';
+
+part 'book_search_controller.g.dart';
 
 /// 書籍検索画面の状態を保持するコントローラ（presentation 層）。
 ///
 /// 「まだ検索していない」状態と「検索したが0件」の状態を区別するため、
 /// [hasSearched] と非同期状態 [books] を分けて持つ。
-class BookSearchController extends AutoDisposeNotifier<BookSearchState> {
+@riverpod
+class BookSearchController extends _$BookSearchController {
   @override
   BookSearchState build() => const BookSearchState();
 
@@ -58,8 +61,3 @@ class BookSearchState {
     );
   }
 }
-
-final bookSearchControllerProvider =
-    AutoDisposeNotifierProvider<BookSearchController, BookSearchState>(
-      BookSearchController.new,
-    );

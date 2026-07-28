@@ -1,8 +1,11 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/book.dart';
 import '../domain/book_repository.dart';
 import '../infrastructure/book_repository_impl.dart';
+
+part 'search_books_use_case.g.dart';
 
 /// 「書籍を検索する」ユースケース（application 層）。
 ///
@@ -18,6 +21,6 @@ class SearchBooksUseCase {
   }
 }
 
-final searchBooksUseCaseProvider = Provider<SearchBooksUseCase>((ref) {
-  return SearchBooksUseCase(ref.watch(bookRepositoryProvider));
-});
+@Riverpod(keepAlive: true)
+SearchBooksUseCase searchBooksUseCase(Ref ref) =>
+    SearchBooksUseCase(ref.watch(bookRepositoryProvider));

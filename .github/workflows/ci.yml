@@ -36,6 +36,10 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      # Riverpod 固有の規約は custom_lint（riverpod_lint）で検査する
+      - name: Riverpod lint
+        run: dart run custom_lint
+
       # 生成物は git 管理外なので、git ls-files で対象を絞りフォーマット差分を検査する
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed $(git ls-files '*.dart')

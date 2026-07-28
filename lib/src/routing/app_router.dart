@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/book_search/domain/book.dart';
 import '../features/book_search/presentation/book_search_screen.dart';
@@ -7,6 +8,8 @@ import '../features/reviews/domain/review.dart';
 import '../features/reviews/presentation/review_detail_screen.dart';
 import '../features/reviews/presentation/review_editor_screen.dart';
 import '../features/reviews/presentation/review_list_screen.dart';
+
+part 'app_router.g.dart';
 
 /// アプリの画面遷移を定義するパス。
 ///
@@ -24,7 +27,8 @@ abstract final class AppRoute {
 ///
 /// ルーティング定義を Riverpod 管理下に置くことで、将来 認証状態などに応じた
 /// リダイレクト（`redirect`）を Provider 経由で差し込めるようにしている（ADR-0004）。
-final goRouterProvider = Provider<GoRouter>((ref) {
+@Riverpod(keepAlive: true)
+GoRouter goRouter(Ref ref) {
   return GoRouter(
     initialLocation: AppRoute.reviews,
     routes: [
@@ -54,4 +58,4 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-});
+}

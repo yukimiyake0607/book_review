@@ -1,9 +1,12 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/review.dart';
 import '../domain/review_draft.dart';
 import '../domain/review_repository.dart';
 import '../infrastructure/review_repository_impl.dart';
+
+part 'save_review_use_case.g.dart';
 
 /// レビューの保存（新規作成 / 更新）を担うユースケース（application 層）。
 ///
@@ -21,6 +24,6 @@ class SaveReviewUseCase {
   }
 }
 
-final saveReviewUseCaseProvider = Provider<SaveReviewUseCase>((ref) {
-  return SaveReviewUseCase(ref.watch(reviewRepositoryProvider));
-});
+@Riverpod(keepAlive: true)
+SaveReviewUseCase saveReviewUseCase(Ref ref) =>
+    SaveReviewUseCase(ref.watch(reviewRepositoryProvider));

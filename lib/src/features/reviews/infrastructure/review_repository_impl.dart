@@ -1,4 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../api/book_review_api_client.dart';
 import '../../../core/error/error_mapper.dart';
@@ -9,6 +10,8 @@ import '../domain/review_draft.dart';
 import '../domain/review_repository.dart';
 import 'review_local_cache.dart';
 import 'review_mapper.dart';
+
+part 'review_repository_impl.g.dart';
 
 /// [ReviewRepository] の実装。
 ///
@@ -84,14 +87,13 @@ class ReviewRepositoryImpl implements ReviewRepository {
 }
 
 /// レビューのローカルキャッシュを供給する Provider。
-final reviewLocalCacheProvider = Provider<ReviewLocalCache>((ref) {
-  return ReviewLocalCache(ref.watch(sharedPreferencesProvider));
-});
+@Riverpod(keepAlive: true)
+ReviewLocalCache reviewLocalCache(Ref ref) =>
+    ReviewLocalCache(ref.watch(sharedPreferencesProvider));
 
 /// [ReviewRepository] を供給する Provider。
-final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
-  return ReviewRepositoryImpl(
-    ref.watch(apiClientProvider),
-    ref.watch(reviewLocalCacheProvider),
-  );
-});
+@Riverpod(keepAlive: true)
+ReviewRepository reviewRepository(Ref ref) => ReviewRepositoryImpl(
+  ref.watch(apiClientProvider),
+  ref.watch(reviewLocalCacheProvider),
+);
