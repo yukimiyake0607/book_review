@@ -48,11 +48,11 @@ app.*.map.json
 coverage/
 lcov.info
 
-# Generated code (build_runner / freezed / json_serializable / riverpod / swagger_parser)
-# 生成物はコミットせず、ローカル/CIで build_runner により再生成する（ADR-0006 参照）
+# build_runner の生成物はコミットせず、ローカル/CIで再生成する（ADR-0006 参照）。
+# 一方、swagger_parser が openapi.yaml から生成するクライアント/DTO（lib/src/api/**.dart）は
+# 「ソース」として扱いコミットする（build_runner が作る *.g.dart のみ除外）。
 *.g.dart
 *.freezed.dart
-lib/src/api/generated/
 
 # Environment
 .env

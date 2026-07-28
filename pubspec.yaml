@@ -30,6 +30,9 @@ dependencies:
 
   # ユーティリティ
   intl: ^0.20.2
+  # retrofit_generator 9.7.0 は retrofit ^4.6.0（Parser.DartMappable 追加前）を前提とするため固定。
+  # 4.9.x に上げると generator 側の switch 網羅性エラーで build_runner が壊れる。
+  retrofit: 4.6.0
 
 dev_dependencies:
   flutter_test:
@@ -45,6 +48,7 @@ dev_dependencies:
 
   # テスト
   mocktail: ^1.0.4
+  retrofit_generator: 9.7.0
 
 flutter:
   uses-material-design: true
