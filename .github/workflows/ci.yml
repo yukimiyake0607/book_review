@@ -19,12 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      # Flutter / Node は mise.toml を単一の真実として導入する。
+      # ローカル（開発機）と CI で同一の Flutter 3.41.7 / Dart 3.11.5 を保証し、
+      # バージョンのドリフトを防ぐ（subosito のハードコードを廃止）。
+      - name: Setup toolchain (mise)
+        uses: jdx/mise-action@v4
         with:
-          channel: stable
-          flutter-version: 3.41.7
           cache: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
         run: flutter pub get
