@@ -19,7 +19,7 @@
 ### 1. 判断の記録（ADR）
 採用した技術と構成について、**採用理由だけでなく「検討した代替案」と「却下した理由」まで**記録しています。
 
-- [ADR-0001 状態管理にRiverpodを採用する理由 / コード生成の可否](docs/adr/0001-state-management.md)
+- [ADR-0001 状態管理にRiverpod（コード生成）を採用する理由](docs/adr/0001-state-management.md)
 - [ADR-0002 レイヤードアーキテクチャとフィーチャーファースト構成](docs/adr/0002-layered-architecture.md)
 - [ADR-0003 ローカルキャッシュに shared_preferences を採用する判断](docs/adr/0003-local-cache.md)
 - [ADR-0004 ルーティングに go_router を採用する理由](docs/adr/0004-routing.md)
@@ -131,10 +131,10 @@ npx @stoplight/prism-cli mock api/openapi.yaml
 flutter run -t lib/main_dev.dart
 ```
 
-要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter を固定）/ Xcode / Node.js（Prism 実行用）
+要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter 3.41.7 / Dart 3.11.5 を固定）/ Xcode / Node.js（Prism 実行用）
 
-> Riverpod のコード生成に必要なツールチェーン整合のため、`analyzer` 等を
-> `dependency_overrides` で固定しています（理由は [ADR-0001](docs/adr/0001-state-management.md)）。
+> 依存は `mise` で固定した SDK 上で、Riverpod / freezed / analyzer を同世代のメジャー最新に
+> 揃えることで `dependency_overrides` なしに解決しています（詳細は [ADR-0001](docs/adr/0001-state-management.md)）。
 
 ## ロードマップ
 
