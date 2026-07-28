@@ -1,5 +1,5 @@
 name: book_review
-description: "A new Flutter project."
+description: "読んだ本を検索・記録するiOSアプリ。Flutterの設計/アーキテクチャを示す技術デモ。"
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -10,10 +10,41 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # 状態管理（Riverpod + Hooks）
+  # 手書きの型付き Notifier / AsyncNotifier を採用（コード生成不採用の理由は ADR-0001）。
+  hooks_riverpod: ^2.6.1
+  flutter_hooks: ^0.20.5
+
+  # ルーティング
+  go_router: ^14.6.2
+
+  # モデル（不変・シリアライズ）
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # ネットワーク
+  dio: ^5.7.0
+
+  # ローカルキャッシュ
+  shared_preferences: ^2.3.3
+
+  # ユーティリティ
+  intl: ^0.20.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+
+  # Lint（機械的な規約強制）
+  flutter_lints: ^5.0.0
+
+  # コード生成（freezed / json_serializable）
+  build_runner: ^2.4.13
+  freezed: ^2.5.8
+  json_serializable: ^6.9.5
+
+  # テスト
+  mocktail: ^1.0.4
 
 flutter:
   uses-material-design: true

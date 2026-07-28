@@ -1,1 +1,50 @@
+# 規約を機械的に強制するための静的解析設定。
+# flutter_lints をベースに、型の厳格化と可読性ルールを追加している。
 include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+  errors:
+    # freezed / json_serializable が付与するアノテーションの警告を無効化
+    invalid_annotation_target: ignore
+    # 未処理のFutureはエラー扱いにして握りつぶしを防ぐ
+    unawaited_futures: error
+
+  exclude:
+    - "**/*.freezed.dart"
+    - "**/*.g.dart"
+    - "lib/src/api/generated/**"
+
+linter:
+  rules:
+    # 可読性・一貫性
+    - always_declare_return_types
+    - directives_ordering
+    - prefer_single_quotes
+    - require_trailing_commas
+    - sort_child_properties_last
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    # 不変性・const 最適化（rebuild削減）
+    - prefer_const_constructors
+    - prefer_const_constructors_in_immutables
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals
+    - prefer_final_in_for_each
+    # 安全性
+    - avoid_dynamic_calls
+    - avoid_slow_async_io
+    - cancel_subscriptions
+    - close_sinks
+    - only_throw_errors
+    - throw_in_finally
+    - unawaited_futures
+    - use_build_context_synchronously
+    # Widget
+    - use_key_in_widget_constructors
+    - avoid_unnecessary_containers

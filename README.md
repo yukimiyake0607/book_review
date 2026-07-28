@@ -19,7 +19,7 @@
 ### 1. 判断の記録（ADR）
 採用した技術と構成について、**採用理由だけでなく「検討した代替案」と「却下した理由」まで**記録しています。
 
-- [ADR-0001 状態管理にRiverpod（コード生成）を採用する理由](docs/adr/0001-state-management.md)
+- [ADR-0001 状態管理にRiverpodを採用する理由 / コード生成の可否](docs/adr/0001-state-management.md)
 - [ADR-0002 レイヤードアーキテクチャとフィーチャーファースト構成](docs/adr/0002-layered-architecture.md)
 - [ADR-0003 ローカルキャッシュに shared_preferences を採用する判断](docs/adr/0003-local-cache.md)
 - [ADR-0004 ルーティングに go_router を採用する理由](docs/adr/0004-routing.md)
@@ -45,7 +45,7 @@ lib/
     ├── routing/                # go_router 定義
     └── features/
         ├── book_search/        # F-01 書籍検索
-        │   ├── presentation/   # 画面・Widget・@riverpod Notifier（AsyncValue）
+        │   ├── presentation/   # 画面・Widget・Riverpod Notifier（AsyncValue）
         │   ├── application/    # ユースケース
         │   ├── domain/         # エンティティ・値オブジェクト・リポジトリIF
         │   └── infrastructure/ # 生成APIクライアント・DTO・リポジトリ実装
@@ -72,15 +72,15 @@ API仕様を [`api/openapi.yaml`](api/openapi.yaml) で定義し、そこから 
 | 領域 | 技術 |
 |---|---|
 | フレームワーク | Flutter（stable）/ Dart |
-| 状態管理 | Riverpod（`@riverpod` コード生成 + hooks_riverpod、AsyncValue中心） |
+| 状態管理 | Riverpod（hooks_riverpod、AsyncValue中心。型付き Notifier を手書き） |
 | アーキテクチャ | レイヤード＋依存性逆転（フィーチャーファースト） |
 | API定義 | OpenAPI + コード生成（swagger_parser）+ モックサーバ（Prism） |
-| モデル | freezed / json_serializable |
+| モデル | freezed / json_serializable（コード生成） |
 | ルーティング | go_router |
 | ローカルキャッシュ | shared_preferences |
 | エラー設計 | sealed class による Result 表現 |
 | CI | GitHub Actions（analyze → format → test → build） |
-| Lint | analysis_options.yaml（custom_lint / riverpod_lint） |
+| Lint | analysis_options.yaml（型の厳格化＋可読性ルール） |
 
 ## テスト
 
@@ -122,7 +122,8 @@ dart run build_runner build --delete-conflicting-outputs
 # モックサーバ（別ターミナル）
 npx @stoplight/prism-cli mock api/openapi.yaml
 
-flutter run --flavor dev -t lib/main_dev.dart
+# 環境はエントリポイントで切り替える（dev / prod）
+flutter run -t lib/main_dev.dart
 ```
 
 要件：Flutter（stable最新）/ Xcode / Node.js（Prism 実行用）
