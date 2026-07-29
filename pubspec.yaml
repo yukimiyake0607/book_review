@@ -30,7 +30,6 @@ dependencies:
 
   # ユーティリティ
   intl: ^0.20.2
-  retrofit: ^4.9.2
 
 dev_dependencies:
   flutter_test:
@@ -49,7 +48,6 @@ dev_dependencies:
 
   # テスト
   mocktail: ^1.0.4
-  retrofit_generator: ^10.2.1
 
 flutter:
   uses-material-design: true

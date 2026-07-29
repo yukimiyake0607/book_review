@@ -1,98 +1,56 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../api/book_review_api_client.dart';
-import '../../../core/error/error_mapper.dart';
-import '../../../core/network/api_client_providers.dart';
-import '../../../core/storage/shared_preferences_provider.dart';
 import '../domain/review.dart';
 import '../domain/review_draft.dart';
 import '../domain/review_repository.dart';
-import 'review_local_cache.dart';
-import 'review_mapper.dart';
 
 part 'review_repository_impl.g.dart';
 
 /// [ReviewRepository] の実装。
 ///
-/// サーバ（生成 API クライアント）を単一の情報源とし、取得結果を [ReviewLocalCache] に保存する。
-/// 外部由来の例外は sealed な AppException へ変換して送出する。
+/// TODO(#15): OpenAPI 生成クライアント（サーバ CRUD）を廃止したため（#12）、
+/// レビューは shared_preferences を単一の情報源とするローカル永続化へ置き換える。
+/// 現状は未実装のスタブ（参照系は空、更新系は [UnimplementedError]）。
 class ReviewRepositoryImpl implements ReviewRepository {
-  ReviewRepositoryImpl(this._client, this._cache);
-
-  final BookReviewApiClient _client;
-  final ReviewLocalCache _cache;
+  const ReviewRepositoryImpl();
 
   @override
-  Future<List<Review>> fetchAll({bool forceRefresh = false}) async {
-    try {
-      final dtos = await _client.reviews.listReviews();
-      await _cache.save(dtos);
-      return _sortedByNewest(dtos.map((dto) => dto.toDomain()));
-    } on Object catch (error) {
-      throw mapDioException(error);
-    }
+  Future<List<Review>> fetchAll({bool forceRefresh = false}) {
+    // TODO(#15): shared_preferences から一覧を読み出して新しい順に返す。
+    throw UnimplementedError('ReviewRepository.fetchAll は #15 で実装する');
   }
 
   @override
-  Future<Review> fetchById(String id) async {
-    try {
-      final dto = await _client.reviews.getReview(id: id);
-      return dto.toDomain();
-    } on Object catch (error) {
-      throw mapDioException(error);
-    }
+  Future<Review> fetchById(String id) {
+    // TODO(#15): shared_preferences から該当 id の1件を読み出す。
+    throw UnimplementedError('ReviewRepository.fetchById は #15 で実装する');
   }
 
   @override
-  Future<Review> create(ReviewDraft draft) async {
-    try {
-      final dto = await _client.reviews.createReview(body: draft.toInput());
-      return dto.toDomain();
-    } on Object catch (error) {
-      throw mapDioException(error);
-    }
+  Future<Review> create(ReviewDraft draft) {
+    // TODO(#15): id をクライアント採番し shared_preferences へ新規保存する。
+    throw UnimplementedError('ReviewRepository.create は #15 で実装する');
   }
 
   @override
-  Future<Review> update(String id, ReviewDraft draft) async {
-    try {
-      final dto = await _client.reviews.updateReview(
-        id: id,
-        body: draft.toInput(),
-      );
-      return dto.toDomain();
-    } on Object catch (error) {
-      throw mapDioException(error);
-    }
+  Future<Review> update(String id, ReviewDraft draft) {
+    // TODO(#15): shared_preferences の該当レビューを更新する。
+    throw UnimplementedError('ReviewRepository.update は #15 で実装する');
   }
 
   @override
-  Future<void> delete(String id) async {
-    try {
-      await _client.reviews.deleteReview(id: id);
-    } on Object catch (error) {
-      throw mapDioException(error);
-    }
+  Future<void> delete(String id) {
+    // TODO(#15): shared_preferences から該当レビューを削除する。
+    throw UnimplementedError('ReviewRepository.delete は #15 で実装する');
   }
 
   @override
   List<Review> cachedReviews() {
-    return _sortedByNewest(_cache.load().map((dto) => dto.toDomain()));
-  }
-
-  List<Review> _sortedByNewest(Iterable<Review> reviews) {
-    return reviews.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // TODO(#15): shared_preferences のキャッシュを返す。地ならし段階では空を返す。
+    return const [];
   }
 }
 
-/// レビューのローカルキャッシュを供給する Provider。
-@Riverpod(keepAlive: true)
-ReviewLocalCache reviewLocalCache(Ref ref) =>
-    ReviewLocalCache(ref.watch(sharedPreferencesProvider));
-
 /// [ReviewRepository] を供給する Provider。
 @Riverpod(keepAlive: true)
-ReviewRepository reviewRepository(Ref ref) => ReviewRepositoryImpl(
-  ref.watch(apiClientProvider),
-  ref.watch(reviewLocalCacheProvider),
-);
+ReviewRepository reviewRepository(Ref ref) => const ReviewRepositoryImpl();
