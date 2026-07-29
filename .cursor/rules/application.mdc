@@ -1,0 +1,31 @@
+---
+description: application 層（ユースケース）の設計ルール
+globs: lib/src/features/**/application/**/*.dart
+---
+
+# application 層（ユースケース）
+
+presentation の「意図」を1つに集約する薄い層。分岐や入口の一本化をここに閉じ込める。
+
+## パターン
+
+```dart
+class SaveReviewUseCase {
+  const SaveReviewUseCase(this._repository);
+  final ReviewRepository _repository; // domain の interface に依存
+
+  Future<Review> call({String? id, required ReviewDraft draft}) =>
+      id == null ? _repository.create(draft) : _repository.update(id, draft);
+}
+
+@Riverpod(keepAlive: true)
+SaveReviewUseCase saveReviewUseCase(Ref ref) =>
+    SaveReviewUseCase(ref.watch(reviewRepositoryProvider));
+```
+
+## ルール
+
+- plain class ＋ `call()` の単一メソッドで「1ユースケース＝1意図」を表す。
+- 依存は domain のインターフェースのみ（infrastructure の実装クラスを直接持たない）。
+- `@riverpod` ファクトリ Provider で供給する（状態を持たない依存は `keepAlive`）。
+- 現状が“単なる委譲”でも、将来の整形・複数ソース統合を差し込む口として意味づけし、意図を DartDoc に残す。

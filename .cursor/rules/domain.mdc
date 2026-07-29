@@ -1,0 +1,46 @@
+---
+description: domain 層（エンティティ・値オブジェクト・リポジトリIF）の設計ルール
+globs: lib/src/features/**/domain/**/*.dart
+---
+
+# domain 層
+
+アプリの中核。外部技術に依存せず、ここだけ読めば「何を扱うドメインか」が分かる状態を保つ。
+
+## 依存の禁止
+
+- `package:flutter/*` / `package:dio/*` / 生成 DTO（`api/**`）を import しない。
+- import してよいのは同 feature の domain 内と `core/error` 程度に留める。
+
+## エンティティ（freezed）
+
+```dart
+@freezed
+abstract class Book with _$Book {
+  const factory Book({required String id, required String title, ...}) = _Book;
+  const Book._(); // 計算プロパティ用の private コンストラクタ
+  String get authorsLabel => authors.isEmpty ? '著者不明' : authors.join(', ');
+}
+```
+
+- 不変（`@freezed`）で定義する。表示用の派生値は getter で持つ（そのため `const X._()` を書く）。
+
+## 値オブジェクト（extension type）
+
+制約はドメインに閉じ込める。信頼できる値と信頼できない入力で生成経路を分ける。
+
+```dart
+extension type const Rating._(int value) {
+  factory Rating(int value) { assert(...); return Rating._(value); } // 信頼できる値
+  static Rating parse(int value) {                                   // 外部入力
+    if (value < min || value > max) throw const ValidationException('...');
+    return Rating._(value);
+  }
+}
+```
+
+## リポジトリインターフェース
+
+- `abstract interface class XxxRepository` で契約のみ定義する（実装は infrastructure）。
+- 失敗は `AppException`(sealed) で表現する（詳細は error-handling）。
+- 「該当なしは空を返す」など、成功／失敗の線引きを DartDoc で明示する。
