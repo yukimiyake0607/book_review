@@ -1,115 +1,84 @@
-# 📚 ブックレビュー管理アプリ
+# 📚 読書レビュー管理アプリ（book_review）
 
 ![CI](https://github.com/yukimiyake0607/book_review/actions/workflows/ci.yml/badge.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-stable-blue)
 
-読んだ本を検索して登録し、評価・感想を記録するiOSアプリです。
+読んだ本を検索して登録し、評価・感想を記録する Flutter（iOS）アプリです。
 
-> **このリポジトリの目的**
-> 機能の多さやリリースではなく、**「どのような設計をし、なぜその設計を選んだか」を示すこと**を目的にした技術デモです。題材（読書記録）はあえて平易にし、アーキテクチャ・状態設計・スキーマ駆動開発・エラーハンドリング・テストといった「どう作るか」に注目できるようにしています。
->
-> **おすすめの読み方**：この README → [`docs/adr/`](docs/adr/)（設計判断の記録）→ 書籍検索〜レビュー登録の1フローを presentation〜infrastructure まで縦に読む。
+## 機能
 
-<!-- スクリーンショット（任意）：検索 / 登録 / 一覧 -->
+- **書籍検索** — 外部書籍APIと連携し、キーワードで本を検索
+- **レビュー管理** — 評価（★）と感想を登録・編集・削除
+- **一覧 / 詳細** — 登録したレビューを一覧・詳細で表示（プルリフレッシュ対応）
 
-## 設計のハイライト
+## スクリーンショット
 
-このリポジトリで特に見ていただきたい点です。
+<!-- 検索 / 登録 / 一覧 の画面を後で貼る（例: <img src="docs/screenshots/search.png" width="240"> ） -->
 
-### 1. 判断の記録（ADR）
-採用した技術と構成について、**採用理由だけでなく「検討した代替案」と「却下した理由」まで**記録しています。
+_準備中_
 
-- [ADR-0001 状態管理にRiverpod（コード生成）を採用する理由](docs/adr/0001-state-management.md)
-- [ADR-0002 レイヤードアーキテクチャとフィーチャーファースト構成](docs/adr/0002-layered-architecture.md)
-- [ADR-0003 ローカルキャッシュに shared_preferences を採用する判断](docs/adr/0003-local-cache.md)
-- [ADR-0004 ルーティングに go_router を採用する理由](docs/adr/0004-routing.md)
-- [ADR-0005 GitHub Actions による品質ゲート](docs/adr/0005-ci.md)
-- [ADR-0006 OpenAPIスキーマ駆動開発を採用する理由](docs/adr/0006-schema-driven.md)
-- [ADR-0007 sealed classによるエラー設計](docs/adr/0007-error-handling.md)
+## 設計方針
 
-### 2. レイヤードアーキテクチャ（依存性逆転）＋フィーチャーファースト
-依存の向きを一方向に統一し、ドメイン層を外部技術から独立させています。機能単位でフォルダを切り、各機能の中に4層を配置することでスケーラビリティを確保しています（[ADR-0002](docs/adr/0002-layered-architecture.md)）。
+機能はシンプルですが、**規模拡大や複数人開発を見据えた構成・状態管理・エラー設計**に重点を置いています。設計判断の理由は [ADR](docs/adr/) に記録しています。
+
+### アーキテクチャ：レイヤード（依存性逆転）＋フィーチャーファースト
+
+依存の向きを一方向に統一し、ドメイン層を外部技術から独立させています。機能単位でフォルダを切り、その中に4層（presentation / application / domain / infrastructure）を配置します。
 
 ```
 presentation ── application ── domain ◄── infrastructure
    UI/状態         ユースケース      中核         API/DB実装
                                   ▲──────────────┘
-                            domainのinterfaceをinfraが実装
+                            domain の interface を infra が実装
 ```
 
-```
-lib/
-└── src/
-    ├── app.dart                # ProviderScope + go_router
-    ├── core/                   # 全機能共通（error, network など）
-    ├── routing/                # go_router 定義
-    └── features/
-        ├── book_search/        # F-01 書籍検索
-        │   ├── presentation/   # 画面・Widget・Riverpod Notifier（@riverpod / AsyncValue）
-        │   ├── application/    # ユースケース
-        │   ├── domain/         # エンティティ・値オブジェクト・リポジトリIF
-        │   └── infrastructure/ # 生成APIクライアント・DTO・リポジトリ実装
-        └── reviews/            # F-02/F-03 レビューCRUD・一覧・詳細
-            └── ...
-```
+> 機能数に対しては過剰にも見えますが、**規模が大きくなっても破綻しない構成を意図的に選んでいます**（→ [ADR-0002](docs/adr/0002-layered-architecture.md)）。
 
-### 3. OpenAPIスキーマ駆動開発
-API仕様を [`api/openapi.yaml`](api/openapi.yaml) で定義し、そこから [`swagger_parser`](https://pub.dev/packages/swagger_parser) でDartクライアント（freezedモデル＋dio）を生成しています。**バックエンド本体は実装せず、モックサーバ（Prism）で開発・テストを回す構成**です。実務でバックエンドチームとOpenAPIスキーマを介して設計調整している経験を、個人リポジトリで再現しました（[ADR-0006](docs/adr/0006-schema-driven.md)）。
+### 状態・エラー設計
 
-### 4. 状態とエラーの設計
-非同期状態は `AsyncValue` で loading / error / data を統一的に扱い、失敗はドメイン層で **sealed class の型** として表現しています。レビュー保存は楽観的更新し、失敗時はロールバックします（[ADR-0007](docs/adr/0007-error-handling.md)）。
+非同期状態は `AsyncValue` で loading / error / data を統一的に扱います。失敗はドメイン層で **sealed class の型**として表現しています。
 
-## 主な機能
+> 単純なアプリなら try/catch でも足りますが、**実務での明示的・網羅的なエラーハンドリングを意識**してこの設計にしています（→ [ADR-0007](docs/adr/0007-error-handling.md)）。
 
-- 書籍検索（外部書籍API連携）
-- レビュー登録・編集・削除（サーバ同期・楽観的更新）
-- レビュー一覧・詳細（プルリフレッシュ）
+## 設計判断の記録（ADR）
 
-要件定義書：[`docs/requirements.md`](docs/requirements.md)
+採用した技術・構成について、**採用理由だけでなく「検討した代替案」と「却下した理由」まで**残しています。
+
+- [ADR-0002 レイヤードアーキテクチャとフィーチャーファースト構成](docs/adr/0002-layered-architecture.md)
+- [ADR-0007 sealed class によるエラー設計](docs/adr/0007-error-handling.md)
+
+その他の ADR は [`docs/adr/`](docs/adr/) を参照してください。
 
 ## 技術スタック
 
 | 領域 | 技術 |
 |---|---|
-| フレームワーク | Flutter（`mise` でバージョン固定）/ Dart |
-| 状態管理 | Riverpod（hooks_riverpod、AsyncValue中心）＋ `@riverpod` コード生成（riverpod_generator） |
-| アーキテクチャ | レイヤード＋依存性逆転（フィーチャーファースト） |
-| API定義 | OpenAPI + コード生成（swagger_parser）+ モックサーバ（Prism） |
-| モデル | freezed / json_serializable（コード生成） |
+| フレームワーク | Flutter / Dart（`mise` でバージョン固定） |
+| 状態管理 | Riverpod（`@riverpod` コード生成 / AsyncValue 中心） |
 | ルーティング | go_router |
-| ローカルキャッシュ | shared_preferences |
-| エラー設計 | sealed class による Result 表現 |
+| モデル | freezed / json_serializable |
+| ローカル保存 | shared_preferences |
 | CI | GitHub Actions（analyze → format → test → build） |
-| Lint | analysis_options.yaml（型の厳格化＋可読性ルール）＋ riverpod_lint（custom_lint） |
 
 ## テスト
 
-「壊れると困る箇所」を狙って書いています。
-
-| 種別 | 対象 |
-|---|---|
-| unit | ユースケース、値オブジェクト（Rating）の境界値、エラー分岐、楽観的更新とロールバック |
-| widget | 検索画面の4状態（loading/error/empty/success）、レビューフォームのバリデーション |
-| integration | 検索 → レビュー登録 → 一覧反映のコアフロー1本 |
-
-APIはインメモリのフェイクリポジトリに差し替え、ネットワークに依存せず実行します。CIでmainへのマージ条件にしています。
+ユースケース・値オブジェクトの境界値・エラー分岐など「壊れると困る箇所」を中心に、unit / widget / integration を用意しています。API はフェイクに差し替え、ネットワーク非依存で実行します。
 
 ```bash
 flutter test
 ```
 
-## 開発プロセス
+## スコープと非機能要件
 
-- **PR駆動開発** — 個人開発ですが、実務と同様に機能単位でPRを作成し、設計意図・テスト観点を記述してセルフレビューを経てマージしています → [Pull Requests](../../pulls)
-- **ADRによる意思決定の記録** — 「なぜそうしたか」を将来の自分とレビュアーのために残しています
-
-### AI活用の方針
-実務同様、AIコーディング支援を活用しています。
-
-- **AIに委ねる**：定型実装の下書き、テストの雛形、リファクタリング案の提示
-- **人間（私）が担う**：要件定義、アーキテクチャ・技術選定の判断（ADRに記録）、生成コードのレビューと採否判断、テスト設計
-
-AIの出力をそのまま採用せず、レビューして書き直した箇所はPRで確認できます。
+デモとしての範囲を明確にするため、**意図的にスコープ外とした項目**も記載します。
+| 項目 | 現状・方針 |
+|---|---|
+| 認証・認可 | スコープ外。導入時はトークン管理＋`flutter_secure_storage` を想定し ADR 化予定 |
+| 国際化（i18n） | 日本語のみ。多言語化は ARB での対応を想定 |
+| アクセシビリティ | 基本的な `Semantics` のみ。WCAG 準拠までは未対応 |
+| 監視・クラッシュ収集 | 未導入。導入時は Firebase Crashlytics を想定 |
+| パフォーマンス | 一覧は小規模前提。大規模化時はページング／リスト仮想化を検討 |
+| オフライン | 直近データを `shared_preferences` にキャッシュする簡易対応のみ |
 
 ## セットアップ
 
@@ -117,36 +86,23 @@ AIの出力をそのまま採用せず、レビューして書き直した箇所
 git clone https://github.com/yukimiyake0607/book_review.git
 cd book_review
 
-# Flutter/Node のバージョンは mise で固定している（fvm は不使用）
+# Flutter/Dart のバージョンは mise で固定
 mise trust
 mise install
 
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 
-# モックサーバ（別ターミナル）
-npx @stoplight/prism-cli mock api/openapi.yaml
-
-# 環境はエントリポイントで切り替える（dev / prod）
+# 環境はエントリポイントで切り替え（dev / prod）
 flutter run -t lib/main_dev.dart
 ```
 
-要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter 3.41.7 / Dart 3.11.5 を固定）/ Xcode / Node.js（Prism 実行用）
-
-> 依存は `mise` で固定した SDK 上で、Riverpod / freezed / analyzer を同世代のメジャー最新に
-> 揃えることで `dependency_overrides` なしに解決しています（詳細は [ADR-0001](docs/adr/0001-state-management.md)）。
-
-## ロードマップ
-
-- [x] 書籍検索・レビューCRUD・一覧（コア）
-- [ ] フィルタ・ソート、簡易統計
-- [ ] 認証を導入する場合の設計方針をADR化
-- [ ] （検討）実サーバ実装への差し替え
-
-## ライセンス
-
-MIT License
+要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter / Dart を固定）/ Xcode
 
 ## 作者
 
 Yuki Miyake — Flutter engineer（[@yukimiyake0607](https://github.com/yukimiyake0607)）
+
+## ライセンス
+
+MIT License
