@@ -20,7 +20,7 @@ class AppEnv {
 
   final Flavor flavor;
 
-  /// APIのベースURL。dev はローカルの Prism モックサーバを指す。
+  /// APIのベースURL（TODO(#15): 公開書籍 API のベースURLに差し替える）。
   final String apiBaseUrl;
 
   /// アプリ表示名（環境が分かるように dev では接尾辞を付ける）。
@@ -30,9 +30,8 @@ class AppEnv {
 
   static const AppEnv dev = AppEnv(
     flavor: Flavor.dev,
-    // Prism モックサーバ（`npx @stoplight/prism-cli mock api/openapi.yaml`）の既定ポート。
-    // iOS シミュレータ/実機からは localhost 到達性の都合で必要に応じて差し替える。
-    apiBaseUrl: 'http://localhost:4010',
+    // TODO(#15): 公開書籍 API のベースURLに差し替える（現状は未使用のプレースホルダ）。
+    apiBaseUrl: '',
     appName: 'BookReview (dev)',
   );
 

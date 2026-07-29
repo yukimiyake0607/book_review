@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Flutter / Node は mise.toml を単一の真実として導入する。
+      # Flutter は mise.toml を単一の真実として導入する。
       # ローカル（開発機）と CI で同一の Flutter 3.41.7 / Dart 3.11.5 を保証し、
       # バージョンのドリフトを防ぐ（subosito のハードコードを廃止）。
       - name: Setup toolchain (mise)
@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 生成物（*.g.dart / *.freezed.dart）はコミットしないため CI で再生成する（ADR-0006）
+      # 生成物（*.g.dart / *.freezed.dart）はコミットしないため CI で再生成する
       - name: Generate code
         run: dart run build_runner build
 

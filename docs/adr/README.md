@@ -10,8 +10,9 @@
 | [0003](0003-local-cache.md) | ローカルキャッシュに shared_preferences | Accepted |
 | [0004](0004-routing.md) | ルーティングに go_router | Accepted |
 | [0005](0005-ci.md) | GitHub Actions による品質ゲート | Accepted |
-| [0006](0006-schema-driven.md) | OpenAPI スキーマ駆動開発 | Accepted |
+| [0006](0006-schema-driven.md) | OpenAPI スキーマ駆動開発 | Superseded（0008） |
 | [0007](0007-error-handling.md) | sealed class によるエラー設計 | Accepted |
+| [0008](0008-drop-openapi.md) | OpenAPI 廃止と公開 API + ローカルへの移行 | Accepted |
 
 ## テンプレート
 

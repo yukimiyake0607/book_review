@@ -1,8 +1,7 @@
-# プロジェクトで使う Flutter / Node を固定する（fvm ではなく mise に一本化）。
+# プロジェクトで使う Flutter を固定する（fvm ではなく mise に一本化）。
 # これにより、どの環境でも同じ Dart SDK でビルド・コード生成が再現できる。
 #
 # flutter は mise のデフォルトプラグインに無いため、グローバル定義と同じ
 # バックエンド（配布URL）を明示して固定する。導入は `mise install`。
 [tools]
-node = "22"
 flutter = { version = "3.41.7", platforms = { linux-x64 = { url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{{ version }}-stable.tar.xz" }, macos-arm64 = { url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_{{ version }}-stable.zip" }, macos-x64 = { url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_{{ version }}-stable.zip" }, windows-x64 = { url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/windows/flutter_windows_{{ version }}-stable.zip" } }, version_expr = 'fromJSON(body).releases | filter({ #.channel == "stable" }) | map({ replace(#.version, "-stable", "") }) | sortVersions()', version_list_url = "https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json" }

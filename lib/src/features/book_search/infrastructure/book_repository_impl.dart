@@ -1,33 +1,25 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../api/book_review_api_client.dart';
-import '../../../core/error/error_mapper.dart';
-import '../../../core/network/api_client_providers.dart';
 import '../domain/book.dart';
 import '../domain/book_repository.dart';
-import 'book_mapper.dart';
 
 part 'book_repository_impl.g.dart';
 
-/// [BookRepository] の実装。生成 API クライアントを呼び、DTO をドメインへ変換する。
+/// [BookRepository] の実装。
+///
+/// TODO(#15): OpenAPI 生成クライアント（Prism モック）を廃止したため（#12）、
+/// 書籍検索は実在の公開書籍 API を手書きの dio クライアント + mapper で叩く実装に
+/// 置き換える。現状は未実装のスタブ（呼び出すと [UnimplementedError]）。
 class BookRepositoryImpl implements BookRepository {
-  BookRepositoryImpl(this._client);
-
-  final BookReviewApiClient _client;
+  const BookRepositoryImpl();
 
   @override
-  Future<List<Book>> search(String keyword, {int page = 1}) async {
-    try {
-      final response = await _client.books.searchBooks(q: keyword, page: page);
-      return response.items.map((dto) => dto.toDomain()).toList();
-    } on Object catch (error) {
-      // 外部由来の例外は sealed な AppException へ変換して送出する。
-      throw mapDioException(error);
-    }
+  Future<List<Book>> search(String keyword, {int page = 1}) {
+    // TODO(#15): 公開書籍 API（手書き dio クライアント）で検索し、mapper で Book へ変換する。
+    throw UnimplementedError('BookRepository.search は #15 で実装する');
   }
 }
 
 /// [BookRepository] を供給する Provider。
 @Riverpod(keepAlive: true)
-BookRepository bookRepository(Ref ref) =>
-    BookRepositoryImpl(ref.watch(apiClientProvider));
+BookRepository bookRepository(Ref ref) => const BookRepositoryImpl();
