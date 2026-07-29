@@ -1,0 +1,46 @@
+---
+description: レイヤードアーキテクチャ（依存性逆転）＋フィーチャーファースト構成の全体像と各層の責務
+alwaysApply: true
+---
+
+# アーキテクチャ（レビュー基準）
+
+機能単位（feature-first）でフォルダを分け、各機能の中に4層を配置する。依存の向きは一方向で、domain を中心に据える（依存性逆転）。
+
+## 依存方向（レビューで最初に見る）
+
+```
+presentation ── application ── domain ◄── infrastructure
+   UI/状態         ユースケース      中核         API/DB実装
+                                  ▲──────────────┘
+                            domain の interface を infrastructure が実装
+```
+
+- 依存は左→右（presentation → application → domain）。infrastructure は domain の interface を実装する形で domain に依存する。
+- domain は他のどの層にも依存しない（Flutter / dio / 生成コードを import しない）。
+- 違反例：presentation が infrastructure の実装クラスを直接 import する／domain が DTO や dio を import する。
+
+## 各層の責務
+
+| 層 | 置くもの | 依存してよい先 |
+|---|---|---|
+| presentation | Screen / Widget / Controller(`@riverpod`) / 画面State | application, domain |
+| application | ユースケース（意図を1つに集約） | domain |
+| domain | エンティティ / 値オブジェクト / リポジトリIF / Draft | （なし） |
+| infrastructure | リポジトリ実装 / DTO / mapper / ローカルキャッシュ | domain, 外部技術(dio 等) |
+
+## フィーチャーフォルダ構成
+
+```
+lib/src/
+├── core/            # 全機能共通（error, network, storage, env, theme）
+├── common_widgets/  # 機能横断の共有Widget
+├── routing/         # go_router 定義
+└── features/<feature>/
+    ├── presentation/
+    ├── application/
+    ├── domain/
+    └── infrastructure/
+```
+
+新機能も既存機能（book_search / reviews）と同じ構造で実装する。独自の構造を作らない。

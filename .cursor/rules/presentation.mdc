@@ -1,0 +1,42 @@
+---
+description: presentation 層（Screen/Widget/Controller/State）の設計ルール
+globs: lib/src/features/**/presentation/**/*.dart
+---
+
+# presentation 層
+
+## Controller（@riverpod class）
+
+```dart
+@riverpod
+class BookSearchController extends _$BookSearchController {
+  @override
+  BookSearchState build() => const BookSearchState();
+
+  Future<void> search(String keyword) async {
+    final result = await AsyncValue.guard(
+      () => ref.read(searchBooksUseCaseProvider)(kw),
+    );
+    if (state.keyword == kw) state = state.copyWith(books: result); // 連打対策
+  }
+}
+```
+
+- 非同期は `AsyncValue` で loading / error / data を表す。取得は `AsyncValue.guard` を使い、生の try/catch を書かない。
+- application のユースケース Provider を `ref.read` で呼ぶ（infrastructure を直接触らない）。
+
+## 楽観的更新＋ロールバック（reviews）
+
+- 先に UI を更新 → 成功で確定 → 失敗時は直前 state に戻して rethrow（`review_list_controller.dart`）。
+
+## State
+
+- 画面 State は freezed でも軽量な手書き immutable でもよいが、必ず immutable ＋ `copyWith`。
+- 「未検索」と「検索して0件」など、UI が区別すべき状態はフィールドで分ける。
+
+## Screen / Widget
+
+- `state.xxx.when(loading / error / data)` で描き分け、empty も明示的に扱う。
+- エラーは `AppErrorView`（`onRetry` 付き）で表示する。
+- 再利用・複雑な部分は private Widget クラス（`_BookTile` 等）へ抽出する。ビルダー関数（`_buildXxx`）にしない。
+- 画面遷移は `context.push(AppRoute.xxx, extra: ...)`。パス文字列を直書きしない。

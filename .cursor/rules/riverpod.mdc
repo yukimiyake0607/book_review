@@ -1,0 +1,21 @@
+---
+description: Riverpod（@riverpod コード生成）の利用ルール
+globs: lib/**/*.dart
+---
+
+# Riverpod
+
+状態管理・DI はすべて Riverpod のコード生成（`@riverpod`）で行う。
+
+## ルール
+
+- Controller は `@riverpod class Xxx extends _$Xxx`。`build()` で初期状態を返す。
+- Repository / UseCase など状態を持たない依存は `@Riverpod(keepAlive: true)` の関数型 Provider で供給する。
+- 依存取得は原則 `ref.watch`（監視）、アクション実行時は `ref.read`。Controller 内は getter で束ねてよい（`XxxRepository get _repository => ref.read(...)`）。
+- 新規で手動 `Provider(...)` グローバル変数や `StateProvider` を作らない。
+- 生成ファイル `*.g.dart` / `*.freezed.dart` は手動編集禁止。元ファイルを直し `dart run build_runner build --delete-conflicting-outputs` を実行する。
+- 本 Repo では生成ファイルをコミットしない（`.gitignore` 済み。ローカル／CI で再生成する）。
+
+## build_runner
+
+- `@riverpod` / `@freezed` の追加・変更の後は、必ず build_runner を実行してから analyze / test する。
