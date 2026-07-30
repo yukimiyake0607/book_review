@@ -1,25 +1,48 @@
+import 'package:book_review/src/core/error/error_mapper.dart';
+import 'package:book_review/src/core/network/dio_provider.dart';
+import 'package:book_review/src/features/book_search/domain/book.dart';
+import 'package:book_review/src/features/book_search/domain/book_repository.dart';
+import 'package:book_review/src/features/book_search/infrastructure/book_mapper.dart';
+import 'package:book_review/src/features/book_search/infrastructure/dto/google_books_dto.dart';
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import '../domain/book.dart';
-import '../domain/book_repository.dart';
 
 part 'book_repository_impl.g.dart';
 
-/// [BookRepository] の実装。
-///
-/// TODO(#15): OpenAPI 生成クライアント（Prism モック）を廃止したため（#12）、
-/// 書籍検索は実在の公開書籍 API を手書きの dio クライアント + mapper で叩く実装に
-/// 置き換える。現状は未実装のスタブ（呼び出すと [UnimplementedError]）。
-class BookRepositoryImpl implements BookRepository {
-  const BookRepositoryImpl();
-
-  @override
-  Future<List<Book>> search(String keyword, {int page = 1}) {
-    // TODO(#15): 公開書籍 API（手書き dio クライアント）で検索し、mapper で Book へ変換する。
-    throw UnimplementedError('BookRepository.search は #15 で実装する');
-  }
+@Riverpod(keepAlive: true)
+BookRepository bookRepository(Ref ref) {
+  return BookRepositoryImpl(ref.watch(dioProvider));
 }
 
-/// [BookRepository] を供給する Provider。
-@Riverpod(keepAlive: true)
-BookRepository bookRepository(Ref ref) => const BookRepositoryImpl();
+class BookRepositoryImpl implements BookRepository {
+  const BookRepositoryImpl(this._dio);
+
+  final Dio _dio;
+
+  static const _pageSize = 20;
+
+  @override
+  Future<List<Book>> search(String keyword, {int page = 1}) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        'volumes',
+        queryParameters: {
+          'q': keyword,
+          'startIndex': (page - 1) * _pageSize,
+          'maxResults': _pageSize,
+        },
+      );
+
+      final data = response.data;
+      if (data == null) return const [];
+
+      final dto = GoogleBooksResponseDto.fromJson(data);
+      final items = dto.items;
+      if (items == null || items.isEmpty) return const [];
+
+      return items.map((item) => item.toDomain()).toList();
+    } on Exception catch (e) {
+      throw mapDioException(e);
+    }
+  }
+}
