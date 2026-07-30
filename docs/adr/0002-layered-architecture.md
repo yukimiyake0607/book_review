@@ -44,8 +44,13 @@ lib/src/features/<feature>/{presentation,application,domain,infrastructure}
 も踏まえ、feature-first に変更した。
 
 ### b. クリーンアーキテクチャ（UseCase を全操作で必須化・厳密な境界）
-本題材の規模ではセレモニーが過剰。UseCase は「複数リポジトリの調整が必要な操作」に限定し、
+本題材の規模ではセレモニーが過剰。UseCase は「複数リポジトリの調整が必要な操作」や
+「分岐など実質的な意図がある操作」に限定し、
 単純な委譲では presentation が repository を直接呼ぶことも許容する（過剰設計の回避）。
+
+具体例として、`reviews` の `SaveReviewUseCase`（`id` 有無で create/update を振り分ける）は
+UseCase を置くが、`book_search` は単純な委譲のため UseCase を置かず、
+`BookSearchController` が `BookRepository` を直接呼ぶ。
 
 ### 命名について
 本アプリの `infrastructure` 層は、Code With Andrea の Riverpod Architecture でいう

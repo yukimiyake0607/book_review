@@ -10,20 +10,20 @@ globs: lib/src/features/**/presentation/**/*.dart
 ```dart
 @riverpod
 class BookSearchController extends _$BookSearchController {
+  BookRepository get _repository => ref.read(bookRepositoryProvider);
+
   @override
   BookSearchState build() => const BookSearchState();
 
   Future<void> search(String keyword) async {
-    final result = await AsyncValue.guard(
-      () => ref.read(searchBooksUseCaseProvider)(kw),
-    );
+    final result = await AsyncValue.guard(() => _repository.search(kw));
     if (state.keyword == kw) state = state.copyWith(books: result); // 連打対策
   }
 }
 ```
 
 - 非同期は `AsyncValue` で loading / error / data を表す。取得は `AsyncValue.guard` を使い、生の try/catch を書かない。
-- application のユースケース Provider を `ref.read` で呼ぶ（infrastructure を直接触らない）。
+- ユースケースがある操作は UseCase Provider を、単純な取得/委譲は repository Provider を `ref.read` で呼ぶ。参照する型は domain の interface（`BookRepository` 等）に依存し、infrastructure の実装クラス型は持たない。
 
 ## 楽観的更新＋ロールバック（reviews）
 
