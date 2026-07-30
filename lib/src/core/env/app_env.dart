@@ -20,7 +20,7 @@ class AppEnv {
 
   final Flavor flavor;
 
-  /// APIのベースURL（TODO(#15): 公開書籍 API のベースURLに差し替える）。
+  /// APIのベースURL（Google Books API: https://www.googleapis.com/books/v1/）。
   final String apiBaseUrl;
 
   /// アプリ表示名（環境が分かるように dev では接尾辞を付ける）。
@@ -30,14 +30,14 @@ class AppEnv {
 
   static const AppEnv dev = AppEnv(
     flavor: Flavor.dev,
-    // TODO(#15): 公開書籍 API のベースURLに差し替える（現状は未使用のプレースホルダ）。
-    apiBaseUrl: '',
+    apiBaseUrl: 'https://www.googleapis.com/books/v1/',
     appName: 'BookReview (dev)',
   );
 
+  // 本番環境のapiBaseUrlも同じものを使用することとする
   static const AppEnv prod = AppEnv(
     flavor: Flavor.prod,
-    apiBaseUrl: 'https://api.example.com',
+    apiBaseUrl: 'https://www.googleapis.com/books/v1/',
     appName: 'BookReview',
   );
 }
