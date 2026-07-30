@@ -16,6 +16,9 @@ Dio dio(Ref ref) {
       baseUrl: env.apiBaseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
+      queryParameters: {
+        if (env.googleBooksApiKey.isNotEmpty) 'key': env.googleBooksApiKey,
+      },
     ),
   );
 }

@@ -44,6 +44,12 @@ AppException _mapStatus(int? statusCode) {
   if (statusCode == 400) {
     return const ValidationException('入力内容に誤りがあります。');
   }
+  if (statusCode == 429) {
+    return const ServerException('リクエスト上限に達しました。しばらくしてから再試行してください。');
+  }
+  if (statusCode == 403) {
+    return const ServerException('APIへのアクセスが拒否されました。APIキーの設定を確認してください。');
+  }
   if (statusCode >= 500) {
     return const ServerException();
   }

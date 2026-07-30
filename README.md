@@ -82,6 +82,10 @@ flutter test
 
 ## セットアップ
 
+clone しただけでは書籍検索は動きません。Google Books API は **APIキー必須** です（キー無しだと共有枠で 429 になります）。キーはリポジトリに含めず、各自がローカルに置きます。
+
+### 1. 依存関係
+
 ```bash
 git clone https://github.com/yukimiyake0607/book_review.git
 cd book_review
@@ -92,9 +96,32 @@ mise install
 
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
+```
 
-# 環境はエントリポイントで切り替え（dev / prod）
-flutter run -t lib/main_dev.dart
+### 2. Google Books API キーを用意する
+
+1. [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作成（または既存を選択）
+2. 「APIとサービス」→「ライブラリ」→ **Books API** を有効化
+3. 「認証情報」→「認証情報を作成」→ **APIキー**
+4. （推奨）キーを Books API のみに制限する
+
+### 3. キーをローカルに配置する
+
+```bash
+cp dart_defines.example.json dart_defines.json
+# dart_defines.json を開き、GOOGLE_BOOKS_API_KEY に自分のキーを記入
+```
+
+`dart_defines.json` は `.gitignore` 済みです。コミットしないでください。
+
+### 4. 起動
+
+Cursor / VS Code なら **dev (debug)** を選択（`launch.json` が `dart_defines.json` を読み込みます）。
+
+ターミナルの場合:
+
+```bash
+flutter run -t lib/main_dev.dart --dart-define-from-file=dart_defines.json
 ```
 
 要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter / Dart を固定）/ Xcode
