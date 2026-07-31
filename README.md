@@ -5,10 +5,12 @@
 
 読んだ本を検索して登録し、評価・感想を記録する Flutter（iOS）アプリです。
 
+> **技術デモです。** 機能の多さより、アーキテクチャ・状態管理・エラー設計の判断とその根拠を示すことが目的です。要件は [docs/requirements.md](docs/requirements.md)、判断記録は [docs/adr/](docs/adr/) にあります。
+
 ## 機能
 
-- **書籍検索** — 外部書籍APIと連携し、キーワードで本を検索
-- **レビュー管理** — 評価（★）と感想を登録・編集・削除
+- **書籍検索** — [Google Books API](https://developers.google.com/books) を手書きの `dio` クライアントで呼び出し、キーワード検索
+- **レビュー管理** — 評価（★）・感想・読了日を登録・編集・削除（端末内に永続化）
 - **一覧 / 詳細** — 登録したレビューを一覧・詳細で表示（プルリフレッシュ対応）
 
 ## スクリーンショット
@@ -17,9 +19,19 @@
 
 _準備中_
 
+## データ層（外部API ＋ ローカル）
+
+| 領域 | 方針 |
+|---|---|
+| 書籍検索 | Google Books。Freezed DTO → `toDomain()` → domain の `Book`。コード生成クライアントは使わない |
+| レビュー | `shared_preferences` を単一の情報源（SoT）。再起動後も残る |
+| APIキー | リポジトリに含めない。`dart_defines.json`（gitignore）または `--dart-define-from-file` で注入 |
+
+選定理由・代替案は [ADR-0008](docs/adr/0008-book-search-api.md) を参照してください。
+
 ## 設計方針
 
-機能はシンプルですが、**規模拡大や複数人開発を見据えた構成・状態管理・エラー設計**に重点を置いています。設計判断の理由は [ADR](docs/adr/) に記録しています。
+機能はシンプルですが、**規模拡大や複数人開発を見据えた構成・状態管理・エラー設計**に重点を置いています。
 
 ### アーキテクチャ：レイヤード（依存性逆転）＋フィーチャーファースト
 
@@ -27,7 +39,7 @@ _準備中_
 
 ```
 presentation ── application ── domain ◄── infrastructure
-   UI/状態         ユースケース      中核         API/DB実装
+   UI/状態         ユースケース      中核         API/ローカル実装
                                   ▲──────────────┘
                             domain の interface を infra が実装
 ```
@@ -36,18 +48,24 @@ presentation ── application ── domain ◄── infrastructure
 
 ### 状態・エラー設計
 
-非同期状態は `AsyncValue` で loading / error / data を統一的に扱います。失敗はドメイン層で **sealed class の型**として表現しています。
+| 領域 | 方針 |
+|---|---|
+| 書籍検索 | `AsyncValue` で loading / error / empty / data をそのまま表示（エラー設計の主役） |
+| レビュー保存・削除 | 書き込み完了後に一覧へ反映。楽観的更新・ロールバックは行わない |
+| 失敗の型 | sealed class の `AppException`（網羅分岐） |
 
-> 単純なアプリなら try/catch でも足りますが、**実務での明示的・網羅的なエラーハンドリングを意識**してこの設計にしています（→ [ADR-0007](docs/adr/0007-error-handling.md)）。
+根拠は [ADR-0007](docs/adr/0007-error-handling.md) / [ADR-0008](docs/adr/0008-book-search-api.md) です。
 
 ## 設計判断の記録（ADR）
 
-採用した技術・構成について、**採用理由だけでなく「検討した代替案」と「却下した理由」まで**残しています。
+採用理由だけでなく「検討した代替案」と「却下した理由」まで残しています。
 
-- [ADR-0002 レイヤードアーキテクチャとフィーチャーファースト構成](docs/adr/0002-layered-architecture.md)
+- [ADR-0002 レイヤードアーキテクチャとフィーチャーファースト](docs/adr/0002-layered-architecture.md)
+- [ADR-0003 レビュー永続化に shared_preferences](docs/adr/0003-local-cache.md)
 - [ADR-0007 sealed class によるエラー設計](docs/adr/0007-error-handling.md)
+- [ADR-0008 公開 API＋ローカル永続化](docs/adr/0008-book-search-api.md)
 
-その他の ADR は [`docs/adr/`](docs/adr/) を参照してください。
+その他は [`docs/adr/`](docs/adr/) を参照してください。
 
 ## 技術スタック
 
@@ -56,13 +74,14 @@ presentation ── application ── domain ◄── infrastructure
 | フレームワーク | Flutter / Dart（`mise` でバージョン固定） |
 | 状態管理 | Riverpod（`@riverpod` コード生成 / AsyncValue 中心） |
 | ルーティング | go_router |
-| モデル | freezed / json_serializable |
+| モデル | freezed / json_serializable（DTO） |
+| ネットワーク | dio（手書き）+ Google Books API |
 | ローカル保存 | shared_preferences |
 | CI | GitHub Actions（analyze → format → test → build） |
 
 ## テスト
 
-ユースケース・値オブジェクトの境界値・エラー分岐など「壊れると困る箇所」を中心に、unit / widget / integration を用意しています。API はフェイクに差し替え、ネットワーク非依存で実行します。
+ユースケース・値オブジェクトの境界値・エラー分岐・ローカル永続化など「壊れると困る箇所」を中心に、unit / widget / integration を用意しています。外部 API はフェイクリポジトリに差し替え、ネットワーク非依存で実行します。
 
 ```bash
 flutter test
@@ -71,18 +90,19 @@ flutter test
 ## スコープと非機能要件
 
 デモとしての範囲を明確にするため、**意図的にスコープ外とした項目**も記載します。
+
 | 項目 | 現状・方針 |
 |---|---|
 | 認証・認可 | スコープ外。導入時はトークン管理＋`flutter_secure_storage` を想定し ADR 化予定 |
+| 複数端末同期 | スコープ外。レビューは端末ローカルのみ |
 | 国際化（i18n） | 日本語のみ。多言語化は ARB での対応を想定 |
 | アクセシビリティ | 基本的な `Semantics` のみ。WCAG 準拠までは未対応 |
 | 監視・クラッシュ収集 | 未導入。導入時は Firebase Crashlytics を想定 |
 | パフォーマンス | 一覧は小規模前提。大規模化時はページング／リスト仮想化を検討 |
-| オフライン | 直近データを `shared_preferences` にキャッシュする簡易対応のみ |
 
 ## セットアップ
 
-clone しただけでは書籍検索は動きません。Google Books API は **APIキー必須** です（キー無しだと共有枠で 429 になります）。キーはリポジトリに含めず、各自がローカルに置きます。
+**clone しただけでは書籍検索は動きません。** Google Books API は APIキー必須です（キー無しだと共有枠で 429 になります）。キーはリポジトリに含めず、各自がローカルに置きます。
 
 ### 1. 依存関係
 
@@ -112,7 +132,7 @@ cp dart_defines.example.json dart_defines.json
 # dart_defines.json を開き、GOOGLE_BOOKS_API_KEY に自分のキーを記入
 ```
 
-`dart_defines.json` は `.gitignore` 済みです。コミットしないでください。
+`dart_defines.json` は `.gitignore` 済みです。**コミットしないでください。**
 
 ### 4. 起動
 
@@ -124,7 +144,19 @@ Cursor / VS Code なら **dev (debug)** を選択（`launch.json` が `dart_defi
 flutter run -t lib/main_dev.dart --dart-define-from-file=dart_defines.json
 ```
 
+### 5. 動作確認の目安
+
+1. 「flutter」などで書籍を検索できる
+2. 書籍を選んでレビューを登録できる
+3. 一覧に反映され、アプリ再起動後も残る
+
 要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter / Dart を固定）/ Xcode
+
+## コードの読み方（おすすめ）
+
+1. [docs/requirements.md](docs/requirements.md) でスコープを把握する
+2. [docs/adr/](docs/adr/) で「なぜそう決めたか」を読む
+3. 1本の動線を縦に読む: 検索 UI → Controller → Repository → DTO/mapper → Google Books / レビューなら SharedPreferences
 
 ## 作者
 
