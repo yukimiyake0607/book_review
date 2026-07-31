@@ -1,6 +1,6 @@
 # ADR-0006: OpenAPI スキーマ駆動開発
 
-- ステータス: Superseded（[ADR-0008](0008-drop-openapi.md) により廃止 / #12）
+- ステータス: Superseded（[ADR-0008](0008-book-search-api.md) により廃止 / #12）
 - 日付: 2026-07-28
 
 > この決定は撤回した。書籍検索は公開書籍 API（手書き dio クライアント）、レビューは

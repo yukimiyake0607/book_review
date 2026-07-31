@@ -11,15 +11,16 @@ domain の interface を実装し、外部技術（dio / SharedPreferences / 生
 
 ```dart
 class BookRepositoryImpl implements BookRepository {
-  BookRepositoryImpl(this._client);
-  final BookReviewApiClient _client;
+  BookRepositoryImpl(this._dio);
+  final Dio _dio;
 
   @override
   Future<List<Book>> search(String keyword, {int page = 1}) async {
     try {
-      final res = await _client.books.searchBooks(q: keyword, page: page);
-      return res.items.map((dto) => dto.toDomain()).toList();
-    } on Object catch (error) {
+      final response = await _dio.get<Map<String, dynamic>>('volumes', ...);
+      final dto = GoogleBooksResponseDto.fromJson(response.data!);
+      return (dto.items ?? []).map((e) => e.toDomain()).toList();
+    } on Exception catch (error) {
       throw mapDioException(error); // 外部例外を sealed な AppException へ
     }
   }
@@ -30,6 +31,6 @@ class BookRepositoryImpl implements BookRepository {
 
 - `implements <domain>Repository` で domain の契約を満たす。
 - 外部由来の例外はこの層の境界で `mapDioException` により `AppException` へ変換して送出する。生の `DioException` を上位へ漏らさない。
-- DTO ↔ domain 変換は extension の `toDomain()` に集約し、変換の散在を防ぐ（`book_mapper.dart` 参照）。
-- ローカルキャッシュは DTO の JSON で保存し、壊れたデータは黙って破棄する（`review_local_cache.dart`）。
+- DTO ↔ domain 変換は extension の `toDomain()` / `toDto()` に集約し、変換の散在を防ぐ（`book_mapper.dart` / `review_mapper.dart` 参照）。
+- レビューのローカル永続化は DTO の JSON で保存し、壊れたデータは黙って破棄する（`review_local_cache.dart`）。shared_preferences が SoT（ADR-0008）。
 - Provider は `@Riverpod(keepAlive: true)` の関数型で供給する。

@@ -21,7 +21,7 @@ presentation ── application ── domain ◄── infrastructure
 ```
 
 - **presentation**: 画面・Widget・Riverpod プロバイダ。状態は `AsyncValue` で表現
-- **application**: ユースケース（「書籍を検索する」「レビューを保存する」）
+- **application**: 分岐・複数ソース統合など**実質的な意図を持つ操作だけ**をユースケースにする（単純な委譲は置かず、presentation が repository を直接呼ぶ。例：「レビューを保存する」）
 - **domain**: エンティティ・値オブジェクト・リポジトリ**インターフェース**。他層に依存しない
 - **infrastructure**: API クライアント（生成コード）・キャッシュ・リポジトリ**実装**
 
@@ -44,8 +44,13 @@ lib/src/features/<feature>/{presentation,application,domain,infrastructure}
 も踏まえ、feature-first に変更した。
 
 ### b. クリーンアーキテクチャ（UseCase を全操作で必須化・厳密な境界）
-本題材の規模ではセレモニーが過剰。UseCase は「複数リポジトリの調整が必要な操作」に限定し、
+本題材の規模ではセレモニーが過剰。UseCase は「複数リポジトリの調整が必要な操作」や
+「分岐など実質的な意図がある操作」に限定し、
 単純な委譲では presentation が repository を直接呼ぶことも許容する（過剰設計の回避）。
+
+具体例として、`reviews` の `SaveReviewUseCase`（`id` 有無で create/update を振り分ける）は
+UseCase を置くが、`book_search` は単純な委譲のため UseCase を置かず、
+`BookSearchController` が `BookRepository` を直接呼ぶ。
 
 ### 命名について
 本アプリの `infrastructure` 層は、Code With Andrea の Riverpod Architecture でいう

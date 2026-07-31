@@ -2,6 +2,7 @@
 
 - ステータス: Accepted
 - 日付: 2026-07-28
+- 更新: 2026-07-31（Issue #15 / ADR-0008 方針B に合わせてレビュー更新の記述を修正）
 
 ## コンテキスト
 
@@ -16,7 +17,7 @@
 sealed AppException
 ├── NetworkException     接続失敗・タイムアウト
 ├── NotFoundException    404
-├── ServerException      5xx
+├── ServerException      5xx / 429 / 403 などサーバ・API側の拒否
 ├── ValidationException  入力不正 / 400
 └── UnknownException     それ以外
 ```
@@ -27,7 +28,13 @@ sealed AppException
 - application/presentation では `AsyncValue.guard` で捕捉し、`AsyncValue.error` に `AppException` が載る
 - UI は `switch` で `AppException` を**網羅的に**分岐し、メッセージと再試行の出し分けを行う
   （sealed なので分岐漏れはコンパイル時に検出される）
-- 楽観的更新（F-02）では、保存失敗時に直前状態へロールバックし、`AppException.message` を通知する
+
+### 機能ごとの出し方（ADR-0008 方針B）
+
+| 機能 | 失敗の見せ方 |
+|---|---|
+| 書籍検索（F-01） | `AsyncValue` の error を `AppErrorView` で表示（エラー設計の主役） |
+| レビュー保存・削除（F-02） | 書き込み完了まで待ち、失敗時は一覧を変えず `AppException.message` を SnackBar 等で通知する。**楽観的更新・ロールバックは行わない** |
 
 ## 検討した代替案
 
@@ -44,7 +51,10 @@ sealed AppException
 ### c. dartz / fpdart の Either
 学習コストと本題材の規模が見合わず、標準の `AsyncValue` + sealed で十分。却下。
 
+### d. レビューでも楽観的更新＋ロールバックを維持
+サーバ往復が前提の旧構成では有効だったが、レビューをローカル永続化した後は複雑さに見合わない（ADR-0008）。却下。
+
 ## 結果（トレードオフ）
 
-- 得たもの: 型で運ばれる失敗、UI での網羅的分岐、握りつぶしの防止
-- 諦めたもの: Result monad による関数型スタイルの連鎖（本規模では不要と判断）
+- 得たもの: 型で運ばれる失敗、UI での網羅的分岐、握りつぶしの防止。検索とレビューで失敗の見せ方を役割分担できる
+- 諦めたもの: Result monad による関数型スタイルの連鎖、レビュー操作の楽観的更新による即時感

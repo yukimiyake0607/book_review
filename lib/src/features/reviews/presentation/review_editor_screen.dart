@@ -64,13 +64,13 @@ class ReviewEditorScreen extends HookConsumerWidget {
         } else {
           await controller.add(draft);
         }
-        // 一覧の楽観的更新は即時に反映済み。フォームを閉じる。
+        // 書き込み完了後に一覧へ反映済み。フォームを閉じる。
         router.pop();
         messenger.showSnackBar(
           SnackBar(content: Text(_isEditing ? 'レビューを更新しました。' : 'レビューを登録しました。')),
         );
       } on AppException catch (e) {
-        // 失敗時は一覧側でロールバック済み。フォームは残してエラーを通知する。
+        // 失敗時は一覧は変更されていない。フォームは残してエラーを通知する。
         isSaving.value = false;
         messenger.showSnackBar(SnackBar(content: Text(e.message)));
       }

@@ -56,3 +56,6 @@ lcov.info
 # Environment
 .env
 .env.*
+
+# Local dart-defines（APIキー等。コミット禁止）
+dart_defines.json

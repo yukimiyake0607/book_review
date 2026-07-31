@@ -11,13 +11,13 @@ globs: test/**/*.dart
 
 | 種別 | 対象 |
 |---|---|
-| unit | ユースケース、値オブジェクト(`Rating`)の境界値、`AppException` へのエラー分岐、楽観的更新とロールバック |
+| unit | ユースケース、値オブジェクト(`Rating`)の境界値、`AppException` へのエラー分岐、レビュー CRUD のローカル永続化 |
 | widget | 検索画面の4状態（loading / error / empty / success）、レビューフォームのバリデーション |
 | integration | 検索 → レビュー登録 → 一覧反映のコアフロー1本 |
 
 ## ルール
 
 - ネットワークに依存しない：`Repository` の interface をインメモリのフェイク実装に差し替える（domain の interface に対して差し替える）。
-- Controller テストは `AsyncLoading → AsyncData / AsyncError` の遷移と、楽観的更新の失敗時ロールバックを検証する。
+- Controller テストは `AsyncLoading → AsyncData / AsyncError` の遷移を検証する。レビューの保存・削除は「書き込み成功後に一覧反映／失敗時は一覧不変」を確認する（楽観的更新・ロールバックは対象外。ADR-0008 方針B）。
 - 同じロジックで入出力が異なるケースはテーブルドリブンで書く。
 - 実行は `flutter test`。CI（analyze → format → test → build）を main マージ条件にする。

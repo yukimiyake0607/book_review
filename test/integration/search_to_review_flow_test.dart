@@ -58,11 +58,11 @@ void main() {
     await tester.tap(find.text('登録する'));
     await tester.pumpAndSettle();
 
-    // 一覧（コントローラの状態）にサーバ採番のレビューが反映されている。
+    // 一覧に採番済みレビューが反映されている。
     final reviews = container.read(reviewListControllerProvider).value!;
     expect(reviews, hasLength(1));
     expect(reviews.first.bookTitle, 'リファクタリング');
     expect(reviews.first.rating.value, 4);
-    expect(reviews.first.id, startsWith('server-'));
+    expect(reviews.first.id, startsWith('local-'));
   });
 }

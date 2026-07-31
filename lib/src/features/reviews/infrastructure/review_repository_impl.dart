@@ -1,56 +1,91 @@
+import 'package:book_review/src/core/error/app_exception.dart';
+import 'package:book_review/src/core/storage/shared_preferences_provider.dart';
+import 'package:book_review/src/features/reviews/domain/review.dart';
+import 'package:book_review/src/features/reviews/domain/review_draft.dart';
+import 'package:book_review/src/features/reviews/domain/review_repository.dart';
+import 'package:book_review/src/features/reviews/infrastructure/review_local_cache.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import '../domain/review.dart';
-import '../domain/review_draft.dart';
-import '../domain/review_repository.dart';
 
 part 'review_repository_impl.g.dart';
 
-/// [ReviewRepository] の実装。
-///
-/// TODO(#15): OpenAPI 生成クライアント（サーバ CRUD）を廃止したため（#12）、
-/// レビューは shared_preferences を単一の情報源とするローカル永続化へ置き換える。
-/// 現状は未実装のスタブ（参照系は空、更新系は [UnimplementedError]）。
-class ReviewRepositoryImpl implements ReviewRepository {
-  const ReviewRepositoryImpl();
-
-  @override
-  Future<List<Review>> fetchAll({bool forceRefresh = false}) {
-    // TODO(#15): shared_preferences から一覧を読み出して新しい順に返す。
-    throw UnimplementedError('ReviewRepository.fetchAll は #15 で実装する');
-  }
-
-  @override
-  Future<Review> fetchById(String id) {
-    // TODO(#15): shared_preferences から該当 id の1件を読み出す。
-    throw UnimplementedError('ReviewRepository.fetchById は #15 で実装する');
-  }
-
-  @override
-  Future<Review> create(ReviewDraft draft) {
-    // TODO(#15): id をクライアント採番し shared_preferences へ新規保存する。
-    throw UnimplementedError('ReviewRepository.create は #15 で実装する');
-  }
-
-  @override
-  Future<Review> update(String id, ReviewDraft draft) {
-    // TODO(#15): shared_preferences の該当レビューを更新する。
-    throw UnimplementedError('ReviewRepository.update は #15 で実装する');
-  }
-
-  @override
-  Future<void> delete(String id) {
-    // TODO(#15): shared_preferences から該当レビューを削除する。
-    throw UnimplementedError('ReviewRepository.delete は #15 で実装する');
-  }
-
-  @override
-  List<Review> cachedReviews() {
-    // TODO(#15): shared_preferences のキャッシュを返す。地ならし段階では空を返す。
-    return const [];
-  }
+@Riverpod(keepAlive: true)
+ReviewRepository reviewRepository(Ref ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return ReviewRepositoryImpl(ReviewLocalCache(prefs));
 }
 
-/// [ReviewRepository] を供給する Provider。
-@Riverpod(keepAlive: true)
-ReviewRepository reviewRepository(Ref ref) => const ReviewRepositoryImpl();
+class ReviewRepositoryImpl implements ReviewRepository {
+  ReviewRepositoryImpl(this._cache);
+
+  final ReviewLocalCache _cache;
+
+  @override
+  Future<List<Review>> fetchAll({bool forceRefresh = false}) async {
+    // ローカルが SoTなのでforceRefreshも同じ読み出しにする
+    return _sorted(_cache.read());
+  }
+
+  @override
+  Future<Review> fetchById(String id) async {
+    final found = _cache.read().where((r) => r.id == id).firstOrNull;
+    if (found == null) {
+      throw const NotFoundException('レビューが見つかりませんでした。');
+    }
+    return found;
+  }
+
+  @override
+  Future<Review> create(ReviewDraft draft) async {
+    final now = DateTime.now();
+    final created = Review(
+      id: 'local-${now.microsecondsSinceEpoch}', // idはサーバーがないためクライアント採番
+      bookId: draft.bookId,
+      bookTitle: draft.bookTitle,
+      bookThumbnailUrl: draft.bookThumbnailUrl,
+      rating: draft.rating,
+      comment: draft.comment,
+      finishedOn: draft.finishedOn,
+      createdAt: now,
+      updatedAt: now,
+    );
+    final next = [created, ..._cache.read()];
+    await _cache.write(next);
+    return created;
+  }
+
+  @override
+  Future<Review> update(String id, ReviewDraft draft) async {
+    final current = _cache.read();
+    final index = current.indexWhere((r) => r.id == id);
+    if (index < 0) {
+      throw const NotFoundException('レビューが見つかりませんでした。');
+    }
+    final updated = current[index].copyWith(
+      bookTitle: draft.bookTitle,
+      bookThumbnailUrl: draft.bookThumbnailUrl,
+      rating: draft.rating,
+      comment: draft.comment,
+      finishedOn: draft.finishedOn,
+      updatedAt: DateTime.now(),
+    );
+    final next = [...current]..[index] = updated;
+    await _cache.write(next);
+    return updated;
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    final current = _cache.read();
+    final next = current.where((r) => r.id != id).toList();
+    if (next.length == current.length) {
+      throw const NotFoundException('レビューが見つかりませんでした。');
+    }
+    await _cache.write(next);
+  }
+
+  @override
+  List<Review> cachedReviews() => _sorted(_cache.read());
+  List<Review> _sorted(List<Review> reviews) {
+    return [...reviews]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+}

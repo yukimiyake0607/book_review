@@ -1,7 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../application/search_books_use_case.dart';
 import '../domain/book.dart';
+import '../domain/book_repository.dart';
+import '../infrastructure/book_repository_impl.dart';
 
 part 'book_search_controller.g.dart';
 
@@ -11,6 +12,8 @@ part 'book_search_controller.g.dart';
 /// [hasSearched] と非同期状態 [books] を分けて持つ。
 @riverpod
 class BookSearchController extends _$BookSearchController {
+  BookRepository get _repository => ref.read(bookRepositoryProvider);
+
   @override
   BookSearchState build() => const BookSearchState();
 
@@ -25,9 +28,7 @@ class BookSearchController extends _$BookSearchController {
       hasSearched: true,
       books: const AsyncLoading(),
     );
-    final result = await AsyncValue.guard(
-      () => ref.read(searchBooksUseCaseProvider)(trimmed),
-    );
+    final result = await AsyncValue.guard(() => _repository.search(trimmed));
     // 検索語が変わっていなければ結果を反映（連打時の取り違えを防ぐ）。
     if (state.keyword == trimmed) {
       state = state.copyWith(books: result);
