@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'src/app.dart';
 import 'src/core/env/app_env.dart';
+import 'src/core/riverpod/retry_policy.dart';
 import 'src/core/storage/shared_preferences_provider.dart';
 
 /// 各エントリポイント（`main_dev.dart` / `main_prod.dart`）から呼ばれる共通起動処理。
@@ -17,6 +18,8 @@ Future<void> bootstrap(AppEnv env) async {
 
   runApp(
     ProviderScope(
+      // Riverpod 3 の自動リトライを全体で無効化する（Issue #9 / ADR-0007）。
+      retry: noRetry,
       overrides: [
         appEnvProvider.overrideWithValue(env),
         sharedPreferencesProvider.overrideWithValue(prefs),
