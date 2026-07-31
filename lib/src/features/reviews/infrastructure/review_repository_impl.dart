@@ -38,7 +38,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
   Future<Review> create(ReviewDraft draft) async {
     final now = DateTime.now();
     final created = Review(
-      id: 'local-${now.microsecondsSinceEpoch}',
+      id: 'local-${now.microsecondsSinceEpoch}', // idはサーバーがないためクライアント採番
       bookId: draft.bookId,
       bookTitle: draft.bookTitle,
       bookThumbnailUrl: draft.bookThumbnailUrl,
