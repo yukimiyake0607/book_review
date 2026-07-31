@@ -3,6 +3,7 @@
 - ステータス: Accepted
 - 日付: 2026-07-28
 - 更新: 2026-07-31（Issue #15 / ADR-0008 方針B に合わせてレビュー更新の記述を修正）
+- 更新: 2026-07-31（Issue #9 / Riverpod 3 の自動リトライを無効化する決定を追記）
 
 ## コンテキスト
 
@@ -35,6 +36,27 @@ sealed AppException
 |---|---|
 | 書籍検索（F-01） | `AsyncValue` の error を `AppErrorView` で表示（エラー設計の主役） |
 | レビュー保存・削除（F-02） | 書き込み完了まで待ち、失敗時は一覧を変えず `AppException.message` を SnackBar 等で通知する。**楽観的更新・ロールバックは行わない** |
+
+### Riverpod 3 の自動リトライを無効化する（Issue #9）
+
+Riverpod 3 は Provider の `build`（初期化）中に例外が投げられると、指数バックオフ
+（200ms → 最大6.4s、最大10回）で**自動リトライ**する（Riverpod 2 には無かった挙動）。
+この既定は、失敗を型で運び `AppErrorView`（`onRetry` 付き）で**決定論的に**見せる本アプリの
+設計（本 ADR / ADR-0008）と干渉する。
+
+**決定: [`ProviderScope`](../../lib/bootstrap.dart) に
+[`noRetry`](../../lib/src/core/riverpod/retry_policy.dart) を渡し、全 Provider の自動リトライを無効化する。**
+
+- `build` で throw するのは [`reviewById`](../../lib/src/features/reviews/presentation/review_list_controller.dart)
+  のローカル `NotFoundException` のみで、変化しないローカルキャッシュへのリトライは無意味
+  （ユーザーには待たされた末に同じエラーが出るだけ）。
+- 書籍検索は `search()` メソッド内の `AsyncValue.guard` で失敗を捕捉するため、そもそも
+  `build` 失敗ではなくリトライ対象外。レビュー一覧はローカル読みのみで throw しない。
+- よって現状、自動リトライで恩恵を受ける Provider は無く、無効化により失敗が即座に
+  `AsyncValue.error` へ載り、`AppErrorView` の手動再試行に一本化できる。
+
+将来 `build` で実ネットワークを叩く Provider を追加し、そこだけ自動リトライさせたい場合は、
+個別 Provider の `@Riverpod(retry: ...)` で上書きする。
 
 ## 検討した代替案
 
