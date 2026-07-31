@@ -3,10 +3,11 @@
 | 項目 | 内容 |
 |---|---|
 | ドキュメント種別 | 要件定義書（docs/requirements.md） |
-| バージョン | 1.1 |
+| バージョン | 1.2 |
 | 作成日 | 2026-07-27 |
+| 更新日 | 2026-07-31 |
 | 作成者 | Yuki Miyake（[@yukimiyake0607](https://github.com/yukimiyake0607)） |
-| ステータス | スコープ確定 |
+| ステータス | スコープ確定（#12 / #15 反映済み） |
 
 ---
 
@@ -14,19 +15,21 @@
 
 **本リポジトリは、機能の多さやリリースを目的としたプロダクトではなく、設計判断とその根拠を提示することを目的とした技術デモである。**
 
-読書記録という平易な題材を選んだのは、題材理解にコストをかけず、**アーキテクチャ・状態設計・スキーマ駆動開発・テスト・エラーハンドリングといった「どう作るか」に読み手の注意を集中させる**ためである。したがって機能はあえて少数に絞り、その代わり各機能をドメイン層からUI層まで一貫して作り込む。設計上の意思決定はすべて [`docs/adr/`](adr/) に記録している。
+読書記録という平易な題材を選んだのは、題材理解にコストをかけず、**アーキテクチャ・状態設計・エラーハンドリング・テストといった「どう作るか」に読み手の注意を集中させる**ためである。したがって機能はあえて少数に絞り、その代わり各機能をドメイン層からUI層まで一貫して作り込む。設計上の意思決定はすべて [`docs/adr/`](adr/) に記録している。
 
-読む順序の推奨：本書 → [`docs/adr/`](adr/) → 1つの機能フロー（書籍検索→レビュー登録）をpresentation〜infrastructureまで縦に読む。
+当初は OpenAPI スキーマ駆動（swagger_parser + Prism）を主眼のひとつとしていたが、公開書籍 API ＋ローカル永続化へ移行した（[ADR-0006](adr/0006-schema-driven.md) Superseded / [ADR-0008](adr/0008-book-search-api.md)）。「スキーマ合意の再現」より、**実ネットワーク・DTO/mapper・sealed エラー・ローカル SoT** の一貫した実装を見せる方針に更新している。
+
+読む順序の推奨：本書 → [`docs/adr/`](adr/) → 1つの機能フロー（書籍検索→レビュー登録）を presentation〜infrastructure まで縦に読む。
 
 ## 1. 背景・目的
 
-読んだ本の記録・評価・振り返りを、シンプルに一元管理する。外部の書籍データベースから書籍を検索して登録し、自分のレビュー（評価・感想・読了日）を記録する。データはサーバに保存し、複数端末から参照できる。
+読んだ本の記録・評価・振り返りを、シンプルに一元管理する。外部の書籍データベース（Google Books）から書籍を検索して登録し、自分のレビュー（評価・感想・読了日）を端末内に記録する。
 
 題材としての狙いは §0 の通りで、以下の設計要素を自然に含むように要件を設計している。
 
-- **外部API連携**（書籍検索）— スキーマ駆動、失敗・ローディング・空状態の設計
-- **サーバとのCRUD同期**（レビュー）— 楽観的更新とロールバック、オフライン考慮
-- **一覧・詳細・フィルタ**という頻出UIパターンにおける状態管理
+- **外部API連携**（書籍検索）— 手書き dio クライアント、DTO↔domain mapper、失敗・ローディング・空状態の設計
+- **ローカル CRUD**（レビュー）— `shared_preferences` を単一の情報源とし、書き込み完了後に一覧へ反映
+- **一覧・詳細**という頻出UIパターンにおける状態管理（`AsyncValue`）
 
 ## 2. スコープ
 
@@ -34,9 +37,9 @@
 
 | ID | 機能 | 概要 |
 |---|---|---|
-| F-01 | 書籍検索 | キーワードで書籍を検索する。外部書籍API（OpenAPI仕様で定義）を呼び出し、結果一覧を表示。ローディング/エラー/空/成功の各状態を明示的に扱う |
-| F-02 | レビュー登録・編集・削除 | 検索結果から書籍を選び、評価（★1〜5）・感想・読了日を登録。サーバへ保存（CRUD）。楽観的更新とエラー時ロールバックを行う |
-| F-03 | レビュー一覧・詳細 | 登録済みレビューの一覧表示（新着順）と詳細表示。プルリフレッシュで再取得 |
+| F-01 | 書籍検索 | キーワードで書籍を検索する。Google Books API を手書きの dio クライアントで呼び出し、結果一覧を表示。ローディング/エラー/空/成功の各状態を明示的に扱う |
+| F-02 | レビュー登録・編集・削除 | 検索結果から書籍を選び、評価（★1〜5）・感想・読了日を登録。`shared_preferences` へ永続化（CRUD）。書き込み完了後に一覧へ反映し、失敗時は一覧を変えずユーザーに通知する（楽観的更新は行わない） |
+| F-03 | レビュー一覧・詳細 | 登録済みレビューの一覧表示（新着順）と詳細表示。プルリフレッシュで再読み込み |
 
 ### 2.2 Should（余力がある場合のみ）
 
@@ -48,6 +51,7 @@
 ### 2.3 スコープ外
 
 - ユーザー登録・認証（本デモでは単一ユーザー前提。認証を入れる場合の設計方針のみADRに記述する）
+- 複数端末同期・サーバ上のレビュー共有
 - SNS共有、他ユーザーとの交流
 - 課金・広告・プッシュ通知
 - タグ・シリーズ管理などの拡張メタデータ
@@ -58,46 +62,48 @@
 
 ```
 presentation  ── application ── domain ◄── infrastructure
-   （UI/状態）      （ユースケース）  （中核）      （API/DB実装）
+   （UI/状態）      （ユースケース）  （中核）      （API/ローカル実装）
                                     ▲──────────────┘
                               依存性逆転（domainのinterfaceをinfraが実装）
 ```
 
 - **presentation**：画面・Widget・Riverpodプロバイダ。UIの状態（loading/error/data）を表現する
-- **application**：ユースケース。「書籍を検索する」「レビューを保存する」などの操作単位
+- **application**：ユースケース。「レビューを保存する」など、分岐や意図の集約が必要な操作単位（単純な委譲は置かない）
 - **domain**：エンティティ・値オブジェクト・リポジトリインターフェース。他層に依存しない
-- **infrastructure**：APIクライアント（生成コード）・DB・リポジトリ実装
+- **infrastructure**：手書き dio クライアント、DTO、mapper、SharedPreferences、リポジトリ実装
 
 判断の根拠は [ADR-0002](adr/0002-layered-architecture.md) に記述する。過剰設計を避け、この題材の規模に見合う層構成にとどめる方針、および feature-first を選んだ理由も同ADRで明示する。
 
-## 4. スキーマ駆動開発（本リポジトリの主眼のひとつ）
+## 4. データ層方針（公開 API ＋ ローカル永続化）
 
-書籍検索・レビュー同期のAPIは、**OpenAPI仕様（`api/openapi.yaml`）を単一の情報源（Single Source of Truth）として定義**し、そこから `swagger_parser` でDartのAPIクライアント型（freezedモデル＋dio）を自動生成する。これは実務でバックエンドチームとOpenAPIスキーマを介して設計調整している経験を、個人リポジトリ上で再現するものである。
+| 領域 | 方針 | ADR |
+|---|---|---|
+| 書籍検索 | Google Books API。手書き dio + Freezed DTO + `toDomain()`。APIキーは `dart-define-from-file` で注入（リポジトリに直書きしない） | [ADR-0008](adr/0008-book-search-api.md) |
+| レビュー | `shared_preferences` に DTO の JSON 配列として保存し、これを単一の情報源（SoT）とする | [ADR-0003](adr/0003-local-cache.md)、[ADR-0008](adr/0008-book-search-api.md) |
 
-- `api/openapi.yaml` … エンドポイント・リクエスト/レスポンススキーマを定義
-- コード生成 … スキーマからDartのモデル・クライアントを生成（生成物はコミットせず、ローカル/CIで `build_runner` により再生成する。判断は ADR-0006）
-- **モックサーバ**（Prism）… `openapi.yaml` からモックAPIを起動し、バックエンド実装なしで開発・動作確認を可能にする
-- サーバ本体の実装はスコープ外。「スキーマを起点にクライアントを組み立てる能力」を示すことが目的である
-
-判断の根拠は [ADR-0006](adr/0006-schema-driven.md) に記述する。
+OpenAPI / swagger_parser / Prism は採用後に廃止した。経緯は [ADR-0006](adr/0006-schema-driven.md)（Superseded）と [ADR-0008](adr/0008-book-search-api.md) を参照。
 
 ## 5. 状態・エラーハンドリング設計
 
 - 非同期状態は Riverpod の `AsyncValue`（loading/error/data）で統一的に表現する
-- 失敗はドメイン層で型として扱う（sealed classによるエラー表現）。例外の握りつぶしを禁止する
-- F-02 の保存は**楽観的更新**を行い、失敗時に直前状態へロールバックしてユーザーに通知する
-- ネットワーク不通時のふるまい（キャッシュ表示・再試行）を定義する
+- 失敗は sealed class（`AppException`）で型として扱う。例外の握りつぶしを禁止する
+- **F-01（検索）**：`AsyncValue` の error を画面で表示する（エラー設計の主役）
+- **F-02（レビュー保存・削除）**：永続化完了まで待ち、成功後に一覧へ反映。失敗時は一覧を変えず `AppException.message` を通知する（**楽観的更新・ロールバックは行わない**／ADR-0008 方針B）
 
-判断の根拠は [ADR-0007](adr/0007-error-handling.md) に記述する。
+判断の根拠は [ADR-0007](adr/0007-error-handling.md) / [ADR-0008](adr/0008-book-search-api.md) に記述する。
 
 ## 6. データモデル（概要）
 
 ```
-Book        … id, title, authors, thumbnailUrl        （検索結果。外部API由来）
-Review      … id, bookId, rating(1-5), comment, finishedOn, createdAt, updatedAt
+Book        … id, title, authors, thumbnailUrl
+              （検索結果。外部API由来。domain では DTO と分離）
+Review      … id, bookId, bookTitle, rating(1-5), comment?,
+              finishedOn?, bookThumbnailUrl?, createdAt, updatedAt
+              （一覧表示用に書籍名・書影を非正規化して保持）
+ReviewDraft … 新規・更新入力（id を持たない）
 ```
 
-不変モデルとして freezed で定義する。ドメインの Review と、API/DBのデータ表現（DTO）は分離し、境界でマッピングする。
+不変モデルとして freezed で定義する。ドメインの Review / Book と、API・ローカル保存用の DTO は分離し、infrastructure 境界でマッピングする。
 
 ## 7. 非機能要件
 
@@ -108,6 +114,7 @@ Review      … id, bookId, rating(1-5), comment, finishedOn, createdAt, updated
 | テスト容易性 | ドメイン層をインターフェース越しに差し替え可能にし、ユースケースを外部依存なしでテストできること |
 | 品質ゲート | CI（analyze / format / test）を通過しないコードはmainにマージしない |
 | 可読性 | custom_lint / riverpod_lint（analysis_options.yaml）で規約を機械的に強制する |
+| セットアップ | clone 後は Google Books API キーのローカル配置が必要（キーは git 管理外）。手順は README に記載 |
 
 ## 8. 技術選定（サマリ）
 
@@ -118,12 +125,13 @@ Review      … id, bookId, rating(1-5), comment, finishedOn, createdAt, updated
 | フレームワーク | Flutter（stable）/ Dart | — |
 | 状態管理 | Riverpod（`@riverpod` コード生成、AsyncValue中心） | [ADR-0001](adr/0001-state-management.md) |
 | アーキテクチャ | レイヤード＋依存性逆転（feature-first） | [ADR-0002](adr/0002-layered-architecture.md) |
-| ローカルキャッシュ | shared_preferences | [ADR-0003](adr/0003-local-cache.md) |
+| レビュー永続化 | shared_preferences（SoT） | [ADR-0003](adr/0003-local-cache.md) |
 | ルーティング | go_router | [ADR-0004](adr/0004-routing.md) |
-| モデル生成 | freezed / json_serializable | — |
-| API定義 | OpenAPI + コード生成（swagger_parser）+ モックサーバ | [ADR-0006](adr/0006-schema-driven.md) |
-| エラー設計 | sealed class によるResult表現 | [ADR-0007](adr/0007-error-handling.md) |
+| モデル | freezed / json_serializable（DTO） | — |
+| ネットワーク | dio（手書きクライアント）+ Google Books API | [ADR-0008](adr/0008-book-search-api.md) |
+| エラー設計 | sealed class（`AppException`） | [ADR-0007](adr/0007-error-handling.md) |
 | CI | GitHub Actions（analyze → format → test → build） | [ADR-0005](adr/0005-ci.md) |
+| （廃止）APIスキーマ駆動 | OpenAPI + swagger_parser + Prism | [ADR-0006](adr/0006-schema-driven.md) Superseded |
 
 ## 9. テスト方針
 
@@ -131,26 +139,25 @@ Review      … id, bookId, rating(1-5), comment, finishedOn, createdAt, updated
 
 | 種別 | 対象 |
 |---|---|
-| unit | ユースケース（検索・保存・一覧取得）、ドメインロジック、DTO⇄ドメインのマッピング、エラー分岐 |
-| widget | 検索画面（各状態の表示）、レビュー登録フォームのバリデーション |
+| unit | ユースケース（保存の create/update 分岐）、ドメインロジック（`Rating`）、DTO⇄ドメインのマッピング、エラー分岐、レビュー CRUD のローカル永続化 |
+| widget | 検索画面（loading / error / empty / success）、レビュー登録フォームのバリデーション |
 | integration | 「検索 → レビュー登録 → 一覧反映」のコアフロー1本 |
 
-APIはモックサーバまたはスタブに差し替えて、ネットワークに依存せずテストする。
+外部 API はフェイクリポジトリに差し替え、ネットワークに依存せずテストする。レビューの Controller は「書き込み成功後に一覧反映／失敗時は一覧不変」を検証する（楽観的更新は対象外）。
 
 ## 10. 開発プロセス
 
 - **PR駆動**：機能単位でブランチを切り、セルフレビューを経てマージする。PRテンプレートに「変更概要／設計上の判断／テスト観点」を含める
-- **ADR**：技術的な意思決定は都度ADRとして記録する。少なくとも状態管理・アーキテクチャ・スキーマ駆動・エラー設計・CIの5本を先に用意する
+- **ADR**：技術的な意思決定は都度ADRとして記録する（状態管理・アーキテクチャ・永続化・ルーティング・CI・エラー設計・データ層移行など）
 - **AI駆動開発**：AIコーディング支援を活用する。AIに委ねる範囲と人間が判断・検証する範囲をREADMEに明記し、レビューで採否を判断した痕跡をPRに残す
 
-## 11. マイルストーン（目安）
+## 11. マイルストーン（実績メモ）
 
-| 期間 | 内容 |
+| 時期 | 内容 |
 |---|---|
-| 8月第1週 | リポジトリ基盤：CI・flavor・アーキテクチャ骨格・analysis_options、ADR-0001/0002/0005 |
-| 8月第2〜3週 | `openapi.yaml`定義＋コード生成＋モック、F-01（書籍検索）、ADR-0006 |
-| 8月第4週〜9月第1週 | F-02（レビューCRUD・楽観的更新）、ADR-0007、テスト |
-| 9月第2週 | F-03（一覧・詳細）、integrationテスト、READMEとADRの仕上げ |
-| 9月第3週以降 | 余力に応じてShould（F-04/F-05）、リファクタリング |
+| 初期 | リポジトリ基盤：CI・flavor・アーキテクチャ骨格・analysis_options、ADR-0001/0002/0005 |
+| 中盤 | OpenAPI + モックでの F-01/F-02 骨格（後に #12 で撤去） |
+| #12 | OpenAPI / 生成クライアント撤去、スタブ化（地ならし） |
+| #15 | Google Books 実装、レビューのローカル永続化、方針B（楽観的更新廃止）、ADR-0007/0008 更新 |
 
-> 面接対策（Flutter/Dart知識のドリル）を毎朝短時間で並行実施する。repoの実装テーマ（状態管理・非同期・rebuild最適化・テスト）とドリルの範囲は意図的に重複させ、学習効率を上げる。
+> Should（F-04/F-05）は余力に応じて実施する。

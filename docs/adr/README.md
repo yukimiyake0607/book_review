@@ -7,12 +7,12 @@
 |---|---|---|
 | [0001](0001-state-management.md) | 状態管理に Riverpod を採用する / コード生成の可否 | Accepted |
 | [0002](0002-layered-architecture.md) | レイヤードアーキテクチャ + フィーチャーファースト | Accepted |
-| [0003](0003-local-cache.md) | ローカルキャッシュに shared_preferences | Accepted |
+| [0003](0003-local-cache.md) | レビュー永続化に shared_preferences | Accepted |
 | [0004](0004-routing.md) | ルーティングに go_router | Accepted |
 | [0005](0005-ci.md) | GitHub Actions による品質ゲート | Accepted |
 | [0006](0006-schema-driven.md) | OpenAPI スキーマ駆動開発 | Superseded（0008） |
 | [0007](0007-error-handling.md) | sealed class によるエラー設計 | Accepted |
-| [0008](0008-drop-openapi.md) | OpenAPI 廃止と公開 API + ローカルへの移行 | Accepted |
+| [0008](0008-book-search-api.md) | OpenAPI 廃止後の公開 API＋ローカル永続化 | Accepted |
 
 ## テンプレート
 
