@@ -47,5 +47,33 @@ void main() {
     test('DioException 以外は UnknownException になる', () {
       expect(mapDioException(Exception('x')), isA<UnknownException>());
     });
+    
+    test('429 は ServerException（上限メッセージ）になる', () {
+      final error = DioException(
+        requestOptions: requestOptions,
+        type: DioExceptionType.badResponse,
+        response: Response<void>(
+          requestOptions: requestOptions,
+          statusCode: 429,
+        ),
+      );
+      final mapped = mapDioException(error);
+      expect(mapped, isA<ServerException>());
+      expect(mapped.message, contains('上限'));
+    });
+
+    test('403 は ServerException（APIキー案内）になる', () {
+      final error = DioException(
+        requestOptions: requestOptions,
+        type: DioExceptionType.badResponse,
+        response: Response<void>(
+          requestOptions: requestOptions,
+          statusCode: 403,
+        ),
+      );
+      final mapped = mapDioException(error);
+      expect(mapped, isA<ServerException>());
+      expect(mapped.message, contains('APIキー'));
+    });
   });
 }

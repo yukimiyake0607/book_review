@@ -23,7 +23,8 @@ class FakeBookRepository implements BookRepository {
 
 /// テスト用のインメモリレビューリポジトリ。
 ///
-/// サーバの採番・保存を模倣し、任意の操作で失敗させられる（ロールバック検証用）。
+/// ローカル永続化を模倣し、任意の操作で失敗させられる
+///（「失敗時に一覧が変わらない」ことの検証用）。
 class FakeReviewRepository implements ReviewRepository {
   FakeReviewRepository({List<Review>? seed}) : _items = [...?seed];
 
@@ -59,7 +60,7 @@ class FakeReviewRepository implements ReviewRepository {
     }
     final now = DateTime.now();
     final review = Review(
-      id: 'server-${_sequence++}',
+      id: 'local-${_sequence++}',
       bookId: draft.bookId,
       bookTitle: draft.bookTitle,
       bookThumbnailUrl: draft.bookThumbnailUrl,

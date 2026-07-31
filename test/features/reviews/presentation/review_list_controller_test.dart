@@ -24,8 +24,8 @@ ProviderContainer _container(FakeReviewRepository fake) {
 }
 
 void main() {
-  group('ReviewListController の楽観的更新', () {
-    test('add: 成功するとサーバ採番の結果で一覧に反映される', () async {
+  group('ReviewListController（書き込み完了後に反映）', () {
+    test('add: 成功すると一覧に反映される', () async {
       final container = _container(FakeReviewRepository());
       await container.read(reviewListControllerProvider.future);
 
@@ -33,11 +33,12 @@ void main() {
 
       final list = container.read(reviewListControllerProvider).value!;
       expect(list, hasLength(1));
-      expect(list.first.id, startsWith('server-')); // 仮IDではなく採番済み
+      expect(list.first.id, startsWith('local-'));
       expect(list.first.bookTitle, 'テスト駆動開発');
+      expect(list.first.comment, '良かった');
     });
 
-    test('add: 失敗すると直前状態へロールバックし例外を送出する', () async {
+    test('add: 失敗すると一覧は変わらず例外を送出する', () async {
       final fake = FakeReviewRepository()
         ..failCreate = const NetworkException();
       final container = _container(fake);
@@ -48,11 +49,11 @@ void main() {
         throwsA(isA<NetworkException>()),
       );
 
-      // ロールバックされ、一覧は空のまま。
+      // 書き込み前に UI を変えないため、一覧は空のまま。
       expect(container.read(reviewListControllerProvider).value, isEmpty);
     });
 
-    test('remove: 失敗すると削除がロールバックされる', () async {
+    test('remove: 失敗すると一覧から消えない', () async {
       final fake = FakeReviewRepository();
       final container = _container(fake);
       await container.read(reviewListControllerProvider.future);
@@ -64,13 +65,11 @@ void main() {
       fake.failDelete = const ServerException();
       await expectLater(notifier.remove(id), throwsA(isA<ServerException>()));
 
-      // 削除はロールバックされ、1件残っている。
       expect(container.read(reviewListControllerProvider).value, hasLength(1));
     });
 
-    test('build: サーバ取得失敗でもキャッシュがあれば表示する', () async {
+    test('build: fetch 失敗でもキャッシュがあれば表示する', () async {
       final fake = FakeReviewRepository()..failFetch = const NetworkException();
-      // キャッシュに1件（fetchById 経由ではなく create で積む）。
       await fake.create(_draft());
       final container = _container(fake);
 
