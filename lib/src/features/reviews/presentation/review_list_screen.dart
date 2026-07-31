@@ -87,11 +87,32 @@ class _ReviewTile extends StatelessWidget {
         ],
       ),
       isThreeLine: review.hasComment,
-      trailing: Text(
-        DateFormat('yyyy/MM/dd').format(review.createdAt),
-        style: Theme.of(context).textTheme.bodySmall,
+      // 読了日があればそれを優先。未設定なら登録日を表示する（どちらもラベルで区別）。
+      trailing: _DateLabel(
+        label: review.finishedOn != null ? '読了' : '登録',
+        date: review.finishedOn ?? review.createdAt,
       ),
       onTap: () => context.push(AppRoute.reviewDetail(review.id)),
+    );
+  }
+}
+
+class _DateLabel extends StatelessWidget {
+  const _DateLabel({required this.label, required this.date});
+
+  final String label;
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(label, style: style),
+        Text(DateFormat('yyyy/MM/dd').format(date), style: style),
+      ],
     );
   }
 }

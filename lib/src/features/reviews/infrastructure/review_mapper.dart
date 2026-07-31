@@ -11,6 +11,9 @@ extension ReviewDtoMapper on ReviewDto {
       rating: Rating(rating),
       createdAt: createdAt,
       updatedAt: updatedAt,
+      bookThumbnailUrl: bookThumbnailUrl,
+      comment: comment,
+      finishedOn: finishedOn,
     );
   }
 }
@@ -24,6 +27,9 @@ extension ReviewMapper on Review {
       rating: rating.value,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      bookThumbnailUrl: bookThumbnailUrl,
+      comment: comment,
+      finishedOn: finishedOn,
     );
   }
 }
