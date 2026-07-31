@@ -37,7 +37,7 @@ _準備中_
 
 依存の向きを一方向に統一し、ドメイン層を外部技術から独立させています。機能単位でフォルダを切り、その中に4層（presentation / application / domain / infrastructure）を配置します。
 
-```
+```text
 presentation ── application ── domain ◄── infrastructure
    UI/状態         ユースケース      中核         API/ローカル実装
                                   ▲──────────────┘

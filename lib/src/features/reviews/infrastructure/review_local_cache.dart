@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:book_review/src/core/error/app_exception.dart';
 import 'package:book_review/src/features/reviews/domain/review.dart';
 import 'package:book_review/src/features/reviews/infrastructure/dto/review_dto.dart';
 import 'package:book_review/src/features/reviews/infrastructure/review_mapper.dart';
@@ -24,7 +25,9 @@ class ReviewLocalCache {
       return list
           .map((e) => ReviewDto.fromJson(e as Map<String, dynamic>).toDomain())
           .toList();
-    } on Exception {
+    } on Object {
+      // FormatException だけでなく、`[1]` のような不正構造による型キャスト失敗
+      // （TypeError＝Error 系）も「破損した保存データ」として破棄する。
       _prefs.remove(_storageKey);
       return const [];
     }
@@ -33,6 +36,10 @@ class ReviewLocalCache {
   /// 一覧をまるごと上書き保存する。
   Future<void> write(List<Review> reviews) async {
     final encoded = jsonEncode(reviews.map((r) => r.toDto().toJson()).toList());
-    await _prefs.setString(_storageKey, encoded);
+    final saved = await _prefs.setString(_storageKey, encoded);
+    if (!saved) {
+      // 保存に失敗したまま成功扱いにすると、再起動時にレビューが消える。
+      throw const UnknownException('レビューの保存に失敗しました。時間をおいて再度お試しください。');
+    }
   }
 }

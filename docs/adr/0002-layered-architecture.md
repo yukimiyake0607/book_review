@@ -21,7 +21,7 @@ presentation ── application ── domain ◄── infrastructure
 ```
 
 - **presentation**: 画面・Widget・Riverpod プロバイダ。状態は `AsyncValue` で表現
-- **application**: ユースケース（「書籍を検索する」「レビューを保存する」）
+- **application**: 分岐・複数ソース統合など**実質的な意図を持つ操作だけ**をユースケースにする（単純な委譲は置かず、presentation が repository を直接呼ぶ。例：「レビューを保存する」）
 - **domain**: エンティティ・値オブジェクト・リポジトリ**インターフェース**。他層に依存しない
 - **infrastructure**: API クライアント（生成コード）・キャッシュ・リポジトリ**実装**
 

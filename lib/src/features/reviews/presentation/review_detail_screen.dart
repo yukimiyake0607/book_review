@@ -79,9 +79,13 @@ class ReviewDetailScreen extends ConsumerWidget {
     final router = GoRouter.of(context);
     try {
       await ref.read(reviewListControllerProvider.notifier).remove(review.id);
+      // 非同期完了中に画面を離れている可能性があるため、遷移前に必ず確認する。
+      // （既に離れている場合に pop すると別画面を閉じてしまう）
+      if (!context.mounted) return;
       router.pop();
       messenger.showSnackBar(const SnackBar(content: Text('レビューを削除しました。')));
     } on AppException catch (e) {
+      if (!context.mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
   }

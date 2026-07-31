@@ -94,7 +94,7 @@ OpenAPI / swagger_parser / Prism は採用後に廃止した。経緯は [ADR-00
 
 ## 6. データモデル（概要）
 
-```
+```text
 Book        … id, title, authors, thumbnailUrl
               （検索結果。外部API由来。domain では DTO と分離）
 Review      … id, bookId, bookTitle, rating(1-5), comment?,
