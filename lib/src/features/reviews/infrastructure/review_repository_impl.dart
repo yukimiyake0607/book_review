@@ -52,7 +52,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
     await _cache.write(next);
     return created;
   }
-  
+
   @override
   Future<Review> update(String id, ReviewDraft draft) async {
     final current = _cache.read();

@@ -47,7 +47,7 @@ void main() {
     test('DioException 以外は UnknownException になる', () {
       expect(mapDioException(Exception('x')), isA<UnknownException>());
     });
-    
+
     test('429 は ServerException（上限メッセージ）になる', () {
       final error = DioException(
         requestOptions: requestOptions,

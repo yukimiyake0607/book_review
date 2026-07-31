@@ -4,7 +4,7 @@ part 'review_dto.freezed.dart';
 part 'review_dto.g.dart';
 
 /// ローカル永続用のレビューDTO。
-/// 
+///
 /// domainの　 [Review]とは分離し、SharedPreferencesにはこのJSON型で保存する。
 @freezed
 abstract class ReviewDto with _$ReviewDto {

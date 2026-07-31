@@ -26,7 +26,7 @@ class AppEnv {
 
   /// アプリ表示名（環境が分かるように dev では接尾辞を付ける）。
   final String appName;
-  
+
   /// Google Books API キー（`--dart-define=GOOGLE_BOOKS_API_KEY=...` で注入）。
   ///
   /// リポジトリに直書きしない。未指定時は空文字（キー無しリクエストになる）。

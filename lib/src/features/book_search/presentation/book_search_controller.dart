@@ -28,9 +28,7 @@ class BookSearchController extends _$BookSearchController {
       hasSearched: true,
       books: const AsyncLoading(),
     );
-    final result = await AsyncValue.guard(
-      () => _repository.search(trimmed),
-    );
+    final result = await AsyncValue.guard(() => _repository.search(trimmed));
     // 検索語が変わっていなければ結果を反映（連打時の取り違えを防ぐ）。
     if (state.keyword == trimmed) {
       state = state.copyWith(books: result);
