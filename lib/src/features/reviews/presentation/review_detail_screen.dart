@@ -78,9 +78,8 @@ class ReviewDetailScreen extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
     try {
-      // 楽観的に一覧から削除し、詳細画面は先に閉じる。
-      router.pop();
       await ref.read(reviewListControllerProvider.notifier).remove(review.id);
+      router.pop();
       messenger.showSnackBar(const SnackBar(content: Text('レビューを削除しました。')));
     } on AppException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
