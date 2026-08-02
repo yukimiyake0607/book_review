@@ -1,0 +1,187 @@
+{
+  "kind": "books#volumes",
+  "totalItems": 14,
+  "items": [
+    {
+      "id": "Tkk_EAAAQBAJ",
+      "volumeInfo": {
+        "title": "現場で使える　Flutter開発入門",
+        "authors": [
+          "澤良弘",
+          "上村隆弘",
+          "村岡直人",
+          "多田幸一"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=Tkk_EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "VEK6DwAAQBAJ",
+      "volumeInfo": {
+        "title": "Flutter　モバイルアプリ開発バイブル",
+        "authors": [
+          "南里勇気",
+          "太田佳敬",
+          "矢田裕基",
+          "片桐寛貴"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=VEK6DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "5lydEAAAQBAJ",
+      "volumeInfo": {
+        "title": "マルチプラットフォーム対応 最新フレームワーク Flutter 3入門",
+        "authors": [
+          "掌田津耶乃"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=5lydEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "8zWGDwAAQBAJ",
+      "volumeInfo": {
+        "title": "Android/iOSｸﾛｽ開発ﾌﾚｰﾑﾜｰｸFlutter入門",
+        "authors": [
+          "掌田津耶乃"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=8zWGDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "_jLZCQAAQBAJ",
+      "volumeInfo": {
+        "title": "ソフトウェアシステムアーキテクチャ構築の原理 第2版",
+        "authors": [
+          "ニック・ロザンスキ",
+          "オウェン・ウッズ"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=_jLZCQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "5JTZDwAAQBAJ",
+      "volumeInfo": {
+        "title": "マイクロサービスパターン［実践的システムデザインのためのコード解説］",
+        "authors": [
+          "Chris Richardson",
+          "長尾高弘",
+          "樽澤広亨"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=5JTZDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "Jv-YCgAAQBAJ",
+      "volumeInfo": {
+        "title": "Game Programming Patterns ソフトウェア開発の問題解決メニュー",
+        "authors": [
+          "Robert Nystrom",
+          "武舎広幸",
+          "阿部和也",
+          "上西昌弘"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=Jv-YCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "7xOiCgAAQBAJ",
+      "volumeInfo": {
+        "title": "ビヨンド ソフトウェア アーキテクチャ",
+        "authors": [
+          "LukeHohmann"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=7xOiCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "2VLADwAAQBAJ",
+      "volumeInfo": {
+        "title": "リファクタリング 既存のコードを安全に改善する（第2版）",
+        "authors": [
+          "Martin Fowler"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=2VLADwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "fBDoAgAAQBAJ",
+      "volumeInfo": {
+        "title": "Java言語で学ぶリファクタリング入門",
+        "authors": [
+          "結城浩"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=fBDoAgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "d3iBEAAAQBAJ",
+      "volumeInfo": {
+        "title": "Clean Craftsmanship　規律、基準、倫理",
+        "authors": [
+          "Ｒｏｂｅｒｔ　Ｃ．Ｍａｒｔｉｎ"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=d3iBEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "HHA9DwAAQBAJ",
+      "volumeInfo": {
+        "title": "テスト駆動開発",
+        "authors": [
+          "Kent Beck"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=HHA9DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "mbmhMQEACAAJ",
+      "volumeInfo": {
+        "title": "実践テスト駆動開発",
+        "authors": [
+          "スティーブフリーマン",
+          "ナットプライス"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=mbmhMQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+        }
+      }
+    },
+    {
+      "id": "wFasCwAAQBAJ",
+      "volumeInfo": {
+        "title": "これからはじめるTDD テスト駆動開発入門",
+        "authors": [
+          "吉谷 愛"
+        ],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=wFasCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        }
+      }
+    }
+  ]
+}
