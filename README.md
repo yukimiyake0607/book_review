@@ -8,6 +8,8 @@
 読んだ本を検索して登録し、評価・感想を記録する Flutter（iOS）アプリです。
 要件定義はこちら：[docs/requirements.md](docs/requirements.md)
 
+clone して `flutter run` するだけで全画面を触れます（書籍検索は同梱データで動くデモモードのため、APIキーは不要です）。詳しくは[セットアップ](#セットアップ)を参照してください。
+
 
 ### 機能
 
@@ -44,23 +46,23 @@ presentation ── application ── domain ◄── infrastructure
 ### データ層（外部API ＋ ローカル）
 
 
-| 領域    | 方針                                                                         |
-| ----- | -------------------------------------------------------------------------- |
-| 書籍検索  | Google Books。Freezed DTO → `toDomain()` → domain の `Book`。|
-| レビュー  | `shared_preferences` を単一の情報源（SoT）。再起動後も残る                                  |
-| APIキー | リポジトリに含めない。`dart_defines.json`（gitignore）または `--dart-define-from-file` で注入 |
+| 領域     | 方針                                                                         |
+| ------ | -------------------------------------------------------------------------- |
+| 書籍検索   | Google Books。Freezed DTO → `toDomain()` → domain の `Book`                   |
+| レビュー   | `shared_preferences` を単一の情報源（SoT）。再起動後も残る                                  |
+| APIキー  | リポジトリに含めない。`dart_defines.json`（gitignore）または `--dart-define-from-file` で注入 |
+| デモモード  | キー未所持でも触れるよう、同梱データを返す実装に差し替える（DTO / mapper / UI は実 API と共通）                |
 
-
-選定理由・代替案は [ADR-0008](docs/adr/0008-book-search-api.md) に記載。
+選定理由・代替案は [ADR-0008](docs/adr/0008-book-search-api.md) / [ADR-0009](docs/adr/0009-demo-mode.md) に記載。
 
 ### 状態・エラー設計
 
 
-| 領域        | 方針                                                              |
-| --------- | --------------------------------------------------------------- |
-| 書籍検索      | `AsyncValue` で loading / error / empty / data をそのまま表示（エラー設計の主役） |
-| レビュー保存・削除 | 書き込み完了後に一覧へ反映。楽観的更新・ロールバックは行わない                                 |
-| 失敗の型      | sealed class の `AppException`（網羅分岐）                             |
+| 領域        | 方針                                                                   |
+| --------- | -------------------------------------------------------------------- |
+| 書籍検索      | `AsyncValue` で loading / error / data を扱い、`data` 内の空リストを空結果として表示する   |
+| レビュー保存・削除 | 書き込み完了後に一覧へ反映。楽観的更新・ロールバックは行わない                                      |
+| 失敗の型      | sealed class の `AppException`（網羅分岐）                                  |
 
 ## 技術スタック
 
@@ -102,10 +104,9 @@ flutter test
 
 ## セットアップ
 
-**clone しただけでは書籍検索は動きません。** Google Books API は APIキー必須です（キー無しだと共有枠で 429 になります）。
-キーはリポジトリに含めず、各自がローカルに置きます。
+要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter / Dart を固定）/ Xcode
 
-### 1. 依存関係
+### 1. clone して起動する（APIキー不要）
 
 ```bash
 git clone https://github.com/yukimiyake0607/book_review.git
@@ -117,42 +118,39 @@ mise install
 
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
+
+flutter run
 ```
 
-### 2. Google Books API キーを用意する
+既定のエントリポイント `lib/main.dart` は**デモモード**で起動します。書籍検索は同梱データ（`assets/demo/`）を返すため、APIキーもネットワークも要りません。「flutter」「テスト」「リファクタリング」などで検索すると結果が出ます。
+
+動作確認の目安:
+
+1. キーワードで書籍を検索できる（ヒットしないキーワードでは空表示になる）
+2. 書籍を選んでレビューを登録できる
+3. 一覧に反映され、アプリ再起動後も残る
+
+### 2. 実際の Google Books API を叩く（任意）
+
+実ネットワークの挙動まで確認したい場合のみ、APIキーを用意します。
 
 1. [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作成（または既存を選択）
 2. 「APIとサービス」→「ライブラリ」→ **Books API** を有効化
 3. 「認証情報」→「認証情報を作成」→ **APIキー**
-4. （推奨）キーを Books API のみに制限する
-
-### 3. キーをローカルに配置する
+4. キーの用途を Books API のみに制限する
 
 ```bash
 cp dart_defines.example.json dart_defines.json
 # dart_defines.json を開き、GOOGLE_BOOKS_API_KEY に自分のキーを記入
-```
 
-`dart_defines.json` は `.gitignore` 済みです。**コミットしないでください。**
-
-### 4. 起動
-
-Cursor / VS Code なら **dev (debug)** を選択（`launch.json` が `dart_defines.json` を読み込みます）。
-
-ターミナルの場合:
-
-```bash
 flutter run -t lib/main_dev.dart --dart-define-from-file=dart_defines.json
 ```
 
-### 5. 動作確認の目安
+Cursor / VS Code なら **dev (debug)** を選択（`launch.json` が `dart_defines.json` を読み込みます）。`dart_defines.json` は `.gitignore` 済みなので、**コミットしないでください。**
 
-1. 「flutter」などで書籍を検索できる
-2. 書籍を選んでレビューを登録できる
-3. 一覧に反映され、アプリ再起動後も残る
+`--dart-define` で渡した値はビルド成果物に含まれます。配布用ビルドを作る場合は、ローカル開発用とは別に、Books API 専用かつ対象 iOS bundle ID に制限したキーを用意してください。
 
-要件：[mise](https://mise.jdx.dev/)（`mise.toml` で Flutter / Dart を固定）/ Xcode
-
+## コードの読み方
 
 1. [docs/requirements.md](docs/requirements.md) でスコープを把握する
 2. [docs/adr/](docs/adr/) で「なぜそう決めたか」を読む

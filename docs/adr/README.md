@@ -13,6 +13,7 @@
 | [0006](0006-schema-driven.md) | OpenAPI スキーマ駆動開発 | Superseded（0008） |
 | [0007](0007-error-handling.md) | sealed class によるエラー設計 | Accepted |
 | [0008](0008-book-search-api.md) | OpenAPI 廃止後の公開 API＋ローカル永続化 | Accepted |
+| [0009](0009-demo-mode.md) | APIキー不要のデモモード | Accepted |
 
 ## テンプレート
 

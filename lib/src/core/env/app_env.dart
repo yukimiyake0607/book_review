@@ -4,11 +4,14 @@ part 'app_env.g.dart';
 
 /// アプリの実行環境（flavor）。
 ///
-/// ネイティブのビルドフレーバーではなく、エントリポイント（`main_dev.dart` /
-/// `main_prod.dart`）で切り替える方式を採用している。iOS/Android/CI のいずれでも
-/// 追加のネイティブ設定なしに確実に動作し、環境差分（APIのベースURLなど）を
-/// 型安全に一元管理できるためである。
-enum Flavor { dev, prod }
+/// ネイティブのビルドフレーバーではなく、エントリポイント（`main.dart` /
+/// `main_dev.dart` / `main_prod.dart`）で切り替える方式を採用している。
+/// iOS/Android/CI のいずれでも追加のネイティブ設定なしに確実に動作し、
+/// 環境差分（APIのベースURLなど）を型安全に一元管理できるためである。
+///
+/// [Flavor.demo] は APIキーを持たない人が clone 直後に触れるようにするための環境で、
+/// 書籍検索だけを同梱データに差し替える（ADR-0009）。
+enum Flavor { demo, dev, prod }
 
 /// 環境ごとの設定値。
 class AppEnv {
@@ -34,6 +37,15 @@ class AppEnv {
 
   bool get isDev => flavor == Flavor.dev;
 
+  /// 書籍検索を同梱データで動かすか（APIキーもネットワークも不要）。
+  bool get useDemoData => flavor == Flavor.demo;
+
+  static const AppEnv demo = AppEnv(
+    flavor: Flavor.demo,
+    apiBaseUrl: 'https://www.googleapis.com/books/v1/',
+    appName: 'BookReview (demo)',
+  );
+
   static const AppEnv dev = AppEnv(
     flavor: Flavor.dev,
     apiBaseUrl: 'https://www.googleapis.com/books/v1/',
@@ -56,5 +68,6 @@ class AppEnv {
 /// 実体は起動時に必ず注入されるため、既定実装は明示的に例外を投げる。
 @Riverpod(keepAlive: true)
 AppEnv appEnv(Ref ref) => throw UnimplementedError(
-  'appEnvProvider must be overridden in the entry point (main_dev/main_prod).',
+  'appEnvProvider must be overridden in the entry point '
+  '(main/main_dev/main_prod).',
 );

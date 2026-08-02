@@ -1,16 +1,23 @@
+import 'package:book_review/src/core/env/app_env.dart';
 import 'package:book_review/src/core/error/error_mapper.dart';
 import 'package:book_review/src/core/network/dio_provider.dart';
 import 'package:book_review/src/features/book_search/domain/book.dart';
 import 'package:book_review/src/features/book_search/domain/book_repository.dart';
 import 'package:book_review/src/features/book_search/infrastructure/book_mapper.dart';
+import 'package:book_review/src/features/book_search/infrastructure/demo_book_repository.dart';
 import 'package:book_review/src/features/book_search/infrastructure/dto/google_books_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'book_repository_impl.g.dart';
 
+/// 環境に応じて実装を選ぶ。差し替えは domain の interface に対して行うため、
+/// application / presentation はどちらが供給されるかを知らない。
 @Riverpod(keepAlive: true)
 BookRepository bookRepository(Ref ref) {
+  if (ref.watch(appEnvProvider).useDemoData) {
+    return DemoBookRepository();
+  }
   return BookRepositoryImpl(ref.watch(dioProvider));
 }
 
