@@ -18,7 +18,7 @@ presentation ── application ── domain ◄── infrastructure
 
 - 依存は左→右（presentation → application → domain）。infrastructure は domain の interface を実装する形で domain に依存する。
 - domain は他のどの層にも依存しない（Flutter / dio / DTO を import しない）。
-- 判定は **import 文の位置ではなく、型の依存先**で行う。上位層が持ってよい型は domain の interface だけで、実装クラス（`BookRepositoryImpl` 等）を型として書いた時点で違反。
+- 判定は **import 文の位置ではなく、型の依存先**で行う。上位層が依存として保持する型（リポジトリ等）は domain の interface に限る。実装クラス（`BookRepositoryImpl` 等）を型として書いた時点で違反（domain のエンティティ・値オブジェクトを扱うのは当然可）。
 - 違反例：上位層が実装クラスを型として参照する（`final BookRepositoryImpl repo = ...`）／上位層が実装クラスを直接インスタンス化する／domain が DTO や dio を import する。
 
 ## 各層の責務

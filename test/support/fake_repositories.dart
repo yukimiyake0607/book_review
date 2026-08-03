@@ -41,6 +41,9 @@ class FakeBookRepository implements BookRepository {
 ///
 /// ローカル永続化を模倣し、任意の操作で失敗させられる
 ///（「失敗時に一覧が変わらない」ことの検証用）。
+///
+/// 存在しない id を渡したときの扱い（`NotFoundException`）も本実装と揃える。
+/// フェイクだけが持つ挙動を作らない（testing.mdc）。
 class FakeReviewRepository implements ReviewRepository {
   FakeReviewRepository({List<Review>? seed}) : _items = [...?seed];
 
@@ -96,6 +99,9 @@ class FakeReviewRepository implements ReviewRepository {
       throw failUpdate!;
     }
     final index = _items.indexWhere((r) => r.id == id);
+    if (index < 0) {
+      throw const NotFoundException();
+    }
     final updated = _items[index].copyWith(
       bookTitle: draft.bookTitle,
       rating: draft.rating,
@@ -112,7 +118,11 @@ class FakeReviewRepository implements ReviewRepository {
     if (failDelete != null) {
       throw failDelete!;
     }
+    final before = _items.length;
     _items.removeWhere((r) => r.id == id);
+    if (_items.length == before) {
+      throw const NotFoundException();
+    }
   }
 
   List<Review> _sortedByNewest() {

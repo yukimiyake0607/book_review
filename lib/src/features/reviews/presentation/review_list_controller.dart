@@ -15,10 +15,12 @@ part 'review_list_controller.g.dart';
 /// （破棄と再読込みを繰り返しても、ローカルから同じ結果を読み直すだけになる）。
 @Riverpod(keepAlive: true)
 class ReviewListController extends _$ReviewListController {
+  /// 書き込み系の操作から使う。実行時に1度読むだけでよいので `read`。
   ReviewRepository get _repository => ref.read(reviewRepositoryProvider);
 
   @override
-  Future<List<Review>> build() => _repository.fetchAll();
+  Future<List<Review>> build() =>
+      ref.watch(reviewRepositoryProvider).fetchAll();
 
   /// プルリフレッシュ等での再取得で使用。
   Future<void> refresh() async {

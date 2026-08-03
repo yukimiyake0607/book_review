@@ -73,9 +73,16 @@ void main() {
       expect(container.read(reviewListControllerProvider).value, hasLength(1));
     });
 
-    test('build: 読み込みに失敗すると AsyncError になる', () async {
+    test('build: 読み込みに失敗すると AsyncLoading から AsyncError へ遷移する', () async {
       final fake = FakeReviewRepository()..failFetch = const NetworkException();
       final container = _container(fake);
+
+      final states = <AsyncValue<List<Review>>>[];
+      container.listen(
+        reviewListControllerProvider,
+        (_, next) => states.add(next),
+        fireImmediately: true,
+      );
 
       await expectLater(
         container.read(reviewListControllerProvider.future),
@@ -83,9 +90,9 @@ void main() {
       );
 
       // 失敗はフォールバックせず、そのまま AsyncError として画面へ渡す。
-      final state = container.read(reviewListControllerProvider);
-      expect(state, isA<AsyncError<List<Review>>>());
-      expect(state.error, isA<NetworkException>());
+      expect(states.first, isA<AsyncLoading<List<Review>>>());
+      expect(states.last, isA<AsyncError<List<Review>>>());
+      expect(states.last.error, isA<NetworkException>());
     });
   });
 }

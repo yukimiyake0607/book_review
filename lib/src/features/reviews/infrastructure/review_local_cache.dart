@@ -18,10 +18,11 @@ class ReviewLocalCache {
 
   /// 保存済み一覧を読む。壊れていれば空リスト（破棄する）
   List<Review> read() {
-    final raw = _prefs.getString(_storageKey);
-    if (raw == null || raw.isEmpty) return const [];
-
     try {
+      // getString 自体も、保存値の型が違えば TypeError を投げうるため try の中で呼ぶ。
+      final raw = _prefs.getString(_storageKey);
+      if (raw == null || raw.isEmpty) return const [];
+
       final list = jsonDecode(raw) as List<dynamic>;
       return list
           .map((e) => ReviewDto.fromJson(e as Map<String, dynamic>).toDomain())
