@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:book_review/src/core/error/app_exception.dart';
 import 'package:book_review/src/features/book_search/domain/book.dart';
 import 'package:book_review/src/features/book_search/domain/book_repository.dart';
@@ -7,13 +9,19 @@ import 'package:book_review/src/features/reviews/domain/review_repository.dart';
 
 /// テスト用のインメモリ書籍リポジトリ。ネットワークに依存しない。
 class FakeBookRepository implements BookRepository {
-  FakeBookRepository({this.results = const [], this.error});
+  FakeBookRepository({this.results = const [], this.error, this.gate});
 
   List<Book> results;
   AppException? error;
 
+  /// 完了させるまで検索を待たせるゲート。loading 状態を観測するために使う。
+  Completer<void>? gate;
+
   @override
   Future<List<Book>> search(String keyword) async {
+    if (gate != null) {
+      await gate!.future;
+    }
     if (error != null) {
       throw error!;
     }

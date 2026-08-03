@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:book_review/src/core/error/app_exception.dart';
 import 'package:book_review/src/features/book_search/domain/book.dart';
 import 'package:book_review/src/features/book_search/infrastructure/book_repository_impl.dart';
@@ -23,6 +25,31 @@ void main() {
     testWidgets('検索前はガイド文言を表示する', (tester) async {
       await _pump(tester, FakeBookRepository());
       expect(find.textContaining('キーワードを入力'), findsOneWidget);
+    });
+
+    testWidgets('検索中はローディングを表示し、完了すると結果に切り替わる', (tester) async {
+      final gate = Completer<void>();
+      final fake = FakeBookRepository(
+        results: const [
+          Book(id: '1', title: 'リーダブルコード', authors: ['Boswell']),
+        ],
+        gate: gate,
+      );
+      await _pump(tester, fake);
+
+      await tester.enterText(find.byType(TextField), 'code');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      // AsyncLoading への遷移だけを反映させる（結果はゲートで止めたまま）。
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('リーダブルコード'), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('リーダブルコード'), findsOneWidget);
     });
 
     testWidgets('検索結果があれば一覧に表示する', (tester) async {
