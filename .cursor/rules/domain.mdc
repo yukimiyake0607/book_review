@@ -9,7 +9,7 @@ globs: lib/src/features/**/domain/**/*.dart
 
 ## 依存の禁止
 
-- `package:flutter/*` / `package:dio/*` / 生成 DTO（`api/**`）を import しない。
+- `package:flutter/*` / `package:dio/*` / DTO（`infrastructure/dto/**`）を import しない。
 - import してよいのは同 feature の domain 内と `core/error` 程度に留める。
 
 ## エンティティ（freezed）
@@ -44,3 +44,4 @@ extension type const Rating._(int value) {
 - `abstract interface class XxxRepository` で契約のみ定義する（実装は infrastructure）。
 - 失敗は `AppException`(sealed) で表現する（詳細は error-handling）。
 - 「該当なしは空を返す」など、成功／失敗の線引きを DartDoc で明示する。
+- **今の実装が使わない引数・メソッドを契約に残さない**（`forceRefresh` のような「将来サーバを足すなら要る」引数、実質同じ処理を返す二重の取得口など）。必要になった時点で契約を広げる。

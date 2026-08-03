@@ -23,7 +23,7 @@ presentation ── application ── domain ◄── infrastructure
 - **presentation**: 画面・Widget・Riverpod プロバイダ。状態は `AsyncValue` で表現
 - **application**: 分岐・複数ソース統合など**実質的な意図を持つ操作だけ**をユースケースにする（単純な委譲は置かず、presentation が repository を直接呼ぶ。例：「レビューを保存する」）
 - **domain**: エンティティ・値オブジェクト・リポジトリ**インターフェース**。他層に依存しない
-- **infrastructure**: API クライアント（生成コード）・キャッシュ・リポジトリ**実装**
+- **infrastructure**: 手書きの dio クライアント・DTO / mapper・ローカル永続化・リポジトリ**実装**
 
 依存は上位→下位の一方向。`infrastructure` は `domain` のインターフェースを実装することで、
 矢印を逆転させ、`domain` を外部技術（dio / shared_preferences / 生成コード）から独立させる。
@@ -33,6 +33,30 @@ presentation ── application ── domain ◄── infrastructure
 ```
 lib/src/features/<feature>/{presentation,application,domain,infrastructure}
 ```
+
+### Provider の宣言位置（DI）
+
+リポジトリを供給する Provider は**実装と同じファイル**に置き、戻り値の型は domain の
+インターフェースにする。どの実装を返すかの分岐もこの中で完結させる。
+
+```dart
+// infrastructure/book_repository_impl.dart
+@Riverpod(keepAlive: true)
+BookRepository bookRepository(Ref ref) =>          // 戻り値は domain の interface
+    ref.watch(appEnvProvider).useDemoData
+        ? DemoBookRepository()
+        : BookRepositoryImpl(ref.watch(dioProvider));
+```
+
+この結果、presentation / application は Provider を読むために infrastructure のファイルを
+import する。import の矢印だけを見ると層をまたいで見えるが、**上位層が受け取る型は
+domain のインターフェースのまま**で、実装クラスは名前としても型としても現れない。
+依存性逆転は「どのファイルを読むか」ではなく「どの型に依存するか」で判定する。
+
+代替案として、Provider だけをフィーチャー直下の DI 専用ファイルへ切り出す構成も検討した。
+import の見た目は層構造どおりになるが、「どの実装が供給されるか」を知るのに常に2ファイルを
+往復することになる。デモ／実 API の差し替え（ADR-0009）のように**供給の分岐そのものが
+設計の要点**である以上、分岐は実装の隣に置く方が読み手にとって追いやすいと判断した。
 
 ## 検討した代替案
 

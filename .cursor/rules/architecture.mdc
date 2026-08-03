@@ -17,23 +17,41 @@ presentation ── application ── domain ◄── infrastructure
 ```
 
 - 依存は左→右（presentation → application → domain）。infrastructure は domain の interface を実装する形で domain に依存する。
-- domain は他のどの層にも依存しない（Flutter / dio / 生成コードを import しない）。
-- 違反例：presentation が infrastructure の実装クラスを直接 import する／domain が DTO や dio を import する。
+- domain は他のどの層にも依存しない（Flutter / dio / DTO を import しない）。
+- 判定は **import 文の位置ではなく、型の依存先**で行う。上位層が持ってよい型は domain の interface だけで、実装クラス（`BookRepositoryImpl` 等）を型として書いた時点で違反。
+- 違反例：上位層が実装クラスを型として参照する（`final BookRepositoryImpl repo = ...`）／上位層が実装クラスを直接インスタンス化する／domain が DTO や dio を import する。
 
 ## 各層の責務
 
 | 層 | 置くもの | 依存してよい先 |
 |---|---|---|
-| presentation | Screen / Widget / Controller(`@riverpod`) / 画面State | application, domain |
-| application | ユースケース（意図を1つに集約） | domain |
+| presentation | Screen / Widget / Controller(`@riverpod`) / 画面State | application, domain（＋下記の Provider） |
+| application | ユースケース（意図を1つに集約） | domain（＋下記の Provider） |
 | domain | エンティティ / 値オブジェクト / リポジトリIF / Draft | （なし） |
-| infrastructure | リポジトリ実装 / DTO / mapper / ローカルキャッシュ | domain, 外部技術(dio 等) |
+| infrastructure | リポジトリ実装 / DTO / mapper / ローカル永続化 | domain, 外部技術(dio 等) |
+
+## Provider の宣言位置（DI）
+
+リポジトリを供給する Provider は、**実装と同じファイル**に関数型で宣言し、戻り値の型は domain の interface にする。どの実装を返すかの分岐もこの中だけで行う（デモ／実 API の差し替えが `bookRepositoryProvider` に閉じている理由）。
+
+```dart
+// infrastructure/book_repository_impl.dart
+@Riverpod(keepAlive: true)
+BookRepository bookRepository(Ref ref) =>            // 戻り値は domain の interface
+    ref.watch(appEnvProvider).useDemoData
+        ? DemoBookRepository()
+        : BookRepositoryImpl(ref.watch(dioProvider));
+```
+
+- 上位層はこの Provider を `ref.read` / `ref.watch` するために infrastructure のファイルを import してよい。**受け取る型は interface のまま**なので、型の依存の向きは反転していない。
+- 別ファイル（DI 専用ファイル）に Provider だけを切り出すことはしない。実装を増減したときに宣言と実装が離れて追えなくなるコストの方が大きいと判断している（ADR-0002）。
+- テストでの差し替えも `overrideWithValue` でこの Provider に対して行う。
 
 ## フィーチャーフォルダ構成
 
 ```
 lib/src/
-├── core/            # 全機能共通（error, network, storage, env, theme）
+├── core/            # 全機能共通（env, error, network, riverpod, storage, theme）
 ├── common_widgets/  # 機能横断の共有Widget
 ├── routing/         # go_router 定義
 └── features/<feature>/
@@ -44,3 +62,7 @@ lib/src/
 ```
 
 新機能も既存機能（book_search / reviews）と同じ構造で実装する。独自の構造を作らない。
+
+## import の書き方
+
+`lib/` 配下から自パッケージを参照するときは相対 import に統一する（`prefer_relative_imports` で強制）。`package:book_review/...` と相対が混在すると、同じ型が別経路で二重に import されうるため。`test/` からは従来どおり `package:` で参照する。

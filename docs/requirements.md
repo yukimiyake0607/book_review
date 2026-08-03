@@ -3,11 +3,11 @@
 | 項目 | 内容 |
 |---|---|
 | ドキュメント種別 | 要件定義書（docs/requirements.md） |
-| バージョン | 1.3 |
+| バージョン | 1.4 |
 | 作成日 | 2026-07-27 |
 | 更新日 | 2026-08-03 |
 | 作成者 | Yuki Miyake（[@yukimiyake0607](https://github.com/yukimiyake0607)） |
-| ステータス | 実装と同期済み（#18 / #19 / #20 反映） |
+| ステータス | 実装・`.cursor/rules` と同期済み |
 
 ---
 
@@ -84,7 +84,7 @@ presentation  ── application ── domain ◄── infrastructure
 | 書籍検索 | Google Books API。手書き dio + Freezed DTO + `toDomain()` | [ADR-0008](adr/0008-book-search-api.md) |
 | デモモード | 既定の `lib/main.dart` は同梱データ（`assets/demo/`）を返す `DemoBookRepository` を供給する。差し替えは `bookRepositoryProvider` 内のみで行い、DTO / mapper / UI は実 API と共通 | [ADR-0009](adr/0009-demo-mode.md) |
 | APIキー | 実 API 経路（`main_dev.dart` / `main_prod.dart`）でのみ使う。`dart-define-from-file` で注入し、リポジトリに直書きしない。未指定時は `key` クエリを付けずに呼ぶ（キーの有無を分岐で持たない） | [ADR-0008](adr/0008-book-search-api.md)、[ADR-0009](adr/0009-demo-mode.md) |
-| レビュー | `shared_preferences` に DTO の JSON 配列として保存し、これを単一の情報源（SoT）とする。デモモードでも本物を使う（ローカル完結でキーも不要なため、偽装する理由がない） | [ADR-0003](adr/0003-local-cache.md)、[ADR-0008](adr/0008-book-search-api.md) |
+| レビュー | `shared_preferences` に DTO の JSON 配列として保存し、これを単一の情報源（SoT）とする。デモモードでも本物を使う（ローカル完結でキーも不要なため、偽装する理由がない）。取得口は `fetchAll()` ひとつで、強制再取得やキャッシュ用の引数・メソッドは契約に持たない（読む先が1つしかないため） | [ADR-0003](adr/0003-local-cache.md)、[ADR-0008](adr/0008-book-search-api.md) |
 
 OpenAPI / swagger_parser / Prism は採用後に廃止した。経緯は [ADR-0006](adr/0006-schema-driven.md)（Superseded）と [ADR-0008](adr/0008-book-search-api.md) を参照。
 
@@ -179,5 +179,6 @@ ReviewDraft … 新規・更新入力（id を持たない）
 | #19 | APIキー不要のデモモード（`Flavor.demo` / `DemoBookRepository`）、ADR-0009 |
 | #20 | README のスクリーンショット・操作デモ整備 |
 | 本書 v1.3 | 実装との乖離を解消（デモモード反映、対応OS・CI 記述の実態合わせ、認証方針を ADR-0010 化、未使用 `page` 引数の削除、mapper / CRUD / loading テストの追加） |
+| 本書 v1.4 | `.cursor/rules` と実装の乖離を解消（レビュー契約の遺物 `forceRefresh` / `cachedReviews` と到達しないフォールバックの削除、infrastructure 境界での例外変換の徹底、永続データの `Rating.parse` 化、lib 内 import の相対統一、Provider 宣言位置を ADR-0002 に明文化） |
 
-> Should（F-04/F-05）は余力に応じて実施する。本書 v1.3 時点では未実装。
+> Should（F-04/F-05）は余力に応じて実施する。本書 v1.4 時点では未実装。

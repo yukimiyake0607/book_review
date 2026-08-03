@@ -26,7 +26,7 @@ SaveReviewUseCase saveReviewUseCase(Ref ref) =>
 ## ルール
 
 - plain class ＋ `call()` の単一メソッドで「1ユースケース＝1意図」を表す。
-- 依存は domain のインターフェースのみ（infrastructure の実装クラスを直接持たない）。
+- **保持する型は domain のインターフェースのみ**（実装クラスを型として書かない・`new` しない）。リポジトリ Provider は infrastructure のファイルで宣言されているため、その Provider を読むための import は許容する（architecture.mdc「Provider の宣言位置」）。
 - `@riverpod` ファクトリ Provider で供給する（状態を持たない依存は `keepAlive`）。
 - UseCase を置くのは **分岐・複数ソース統合など実質的な意図があるとき**に限る（例: `SaveReviewUseCase` は `id` 有無で create/update を振り分ける）。
 - 単なる委譲（例: 書籍検索）は UseCase を作らず、presentation が repository を直接呼ぶ（`book_search_controller.dart` 参照）。「将来の拡張の口」を理由に空の委譲 UseCase を作らない。
