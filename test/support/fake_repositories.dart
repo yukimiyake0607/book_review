@@ -53,7 +53,7 @@ class FakeReviewRepository implements ReviewRepository {
   AppException? failFetch;
 
   @override
-  Future<List<Review>> fetchAll({bool forceRefresh = false}) async {
+  Future<List<Review>> fetchAll() async {
     if (failFetch != null) {
       throw failFetch!;
     }
@@ -114,9 +114,6 @@ class FakeReviewRepository implements ReviewRepository {
     }
     _items.removeWhere((r) => r.id == id);
   }
-
-  @override
-  List<Review> cachedReviews() => _sortedByNewest();
 
   List<Review> _sortedByNewest() {
     return [..._items]..sort((a, b) => b.createdAt.compareTo(a.createdAt));

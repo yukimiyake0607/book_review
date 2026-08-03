@@ -1,10 +1,11 @@
-import 'package:book_review/src/core/error/app_exception.dart';
-import 'package:book_review/src/core/storage/shared_preferences_provider.dart';
-import 'package:book_review/src/features/reviews/domain/review.dart';
-import 'package:book_review/src/features/reviews/domain/review_draft.dart';
-import 'package:book_review/src/features/reviews/domain/review_repository.dart';
-import 'package:book_review/src/features/reviews/infrastructure/review_local_cache.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../core/error/app_exception.dart';
+import '../../../core/storage/shared_preferences_provider.dart';
+import '../domain/review.dart';
+import '../domain/review_draft.dart';
+import '../domain/review_repository.dart';
+import 'review_local_cache.dart';
 
 part 'review_repository_impl.g.dart';
 
@@ -14,16 +15,17 @@ ReviewRepository reviewRepository(Ref ref) {
   return ReviewRepositoryImpl(ReviewLocalCache(prefs));
 }
 
+/// [ReviewRepository] のローカル実装。
+///
+/// `shared_preferences`（[ReviewLocalCache]）だけで CRUD を完結させる。サーバが
+/// 無いため、id の採番・タイムスタンプ・並び順はこの層の責務になる（ADR-0008）。
 class ReviewRepositoryImpl implements ReviewRepository {
   ReviewRepositoryImpl(this._cache);
 
   final ReviewLocalCache _cache;
 
   @override
-  Future<List<Review>> fetchAll({bool forceRefresh = false}) async {
-    // ローカルが SoTなのでforceRefreshも同じ読み出しにする
-    return _sorted(_cache.read());
-  }
+  Future<List<Review>> fetchAll() async => _sorted(_cache.read());
 
   @override
   Future<Review> fetchById(String id) async {
@@ -83,8 +85,6 @@ class ReviewRepositoryImpl implements ReviewRepository {
     await _cache.write(next);
   }
 
-  @override
-  List<Review> cachedReviews() => _sorted(_cache.read());
   List<Review> _sorted(List<Review> reviews) {
     return [...reviews]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }

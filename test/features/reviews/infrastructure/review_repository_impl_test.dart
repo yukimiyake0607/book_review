@@ -155,16 +155,5 @@ void main() {
         throwsA(isA<NotFoundException>()),
       );
     });
-
-    test('cachedReviews も新着順で返す', () async {
-      final oldest = await repository.create(draft(bookTitle: '1冊目'));
-      await tick();
-      final newest = await repository.create(draft(bookTitle: '2冊目'));
-
-      expect(repository.cachedReviews().map((r) => r.id), [
-        newest.id,
-        oldest.id,
-      ]);
-    });
   });
 }
