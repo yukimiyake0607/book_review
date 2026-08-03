@@ -86,7 +86,7 @@ presentation ── application ── domain ◄── infrastructure
 | モデル     | freezed / json_serializable（DTO）                |
 | ネットワーク  | dio（手書き）+ Google Books API                      |
 | ローカル保存  | shared_preferences                              |
-| CI      | GitHub Actions（build_runner → analyze → custom_lint → format → test → build） |
+| CI      | GitHub Actions（build_runner → analyze → format → test → build）。main の必須ステータスチェック |
 
 ## AI 活用の範囲
 
@@ -96,7 +96,7 @@ presentation ── application ── domain ◄── infrastructure
 | --- | --- |
 | AI に任せた | Widget のボイラープレート、DTO / mapper の定型実装、テストケースの洗い出し、命名や文章の推敲、機械的なリファクタの適用 |
 | 自分で判断した | 層の切り方と依存の向き、パッケージ選定、`AppException` の型設計、SoT をどこに置くか、スコープに入れない機能の線引き |
-| 自分で検証した | 生成されたコードをレビューして採否を決め、CI（analyze / custom_lint / format / test / build）と手動の動作確認を通す |
+| 自分で検証した | 生成されたコードをレビューして採否を決め、CI（analyze / format / test / build）と手動の動作確認を通す |
 
 **AI の提案や自分の初期実装を撤回した判断**を、代替案・却下理由つきで [docs/adr/](docs/adr/) に残しています。設計判断が残っているかどうかが、このリポジトリで一番見てほしい部分です。
 
@@ -104,6 +104,7 @@ presentation ── application ── domain ◄── infrastructure
 - **楽観的更新を実装後に撤回した** — ロールバックの複雑さが、ローカル保存の速度で得られる体感差に見合わなかった（[ADR-0008](docs/adr/0008-book-search-api.md) 方針B）
 - **OpenAPI スキーマ駆動を撤回した** — モックサーバ前提だと clone しても動かせず、デモとしての目的と衝突した（[ADR-0006](docs/adr/0006-schema-driven.md) Superseded → [ADR-0008](docs/adr/0008-book-search-api.md)）
 - **Riverpod 3 の既定挙動を無効化した** — Provider の自動リトライが「ユーザーが再試行を決める」エラー設計と衝突するため、`ProviderScope(retry: noRetry)` で切った（[ADR-0007](docs/adr/0007-error-handling.md)）
+- **CI の `custom_lint` ステップを廃止した** — `riverpod_lint` 3.1.0 が `analysis_server_plugin` へ移行しており、`custom_lint` 経由ではルールが 0 個しか登録されず「常に成功する空振りのステップ」になっていた。意図的な違反コードで検出されないことを確認したうえで、`analysis_options.yaml` の `plugins` 登録 + `flutter analyze` に一本化した（[ADR-0005](docs/adr/0005-ci.md)）
 
 AI に一貫した実装をさせるため、アーキテクチャと層ごとの規約は [.cursor/rules/](.cursor/rules/) に明文化しています。PR には [テンプレート](.github/pull_request_template.md)の「AI活用メモ」欄で、提案の採否を都度残しています。
 

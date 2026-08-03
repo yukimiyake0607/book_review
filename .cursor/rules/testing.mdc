@@ -20,4 +20,4 @@ globs: test/**/*.dart
 - ネットワークに依存しない：`Repository` の interface をインメモリのフェイク実装に差し替える（domain の interface に対して差し替える）。
 - Controller テストは `AsyncLoading → AsyncData / AsyncError` の遷移を検証する。レビューの保存・削除は「書き込み成功後に一覧反映／失敗時は一覧不変」を確認する（楽観的更新・ロールバックは対象外。ADR-0008 方針B）。
 - 同じロジックで入出力が異なるケースはテーブルドリブンで書く。
-- 実行は `flutter test`。CI（analyze → custom_lint → format → test → build）を main マージ条件にする。
+- 実行は `flutter test`。CI ジョブ `analyze / format / test / build` を main の必須ステータスチェックに指定する（`riverpod_lint` は `analysis_options.yaml` の `plugins` 登録により analyze に含まれる）。

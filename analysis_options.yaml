@@ -1,13 +1,17 @@
 # 規約を機械的に強制するための静的解析設定。
 # flutter_lints をベースに、型の厳格化と可読性ルールを追加している。
-# さらに custom_lint 経由で riverpod_lint を有効化し、Riverpod 固有の規約
+# さらに riverpod_lint を有効化し、Riverpod 固有の規約
 # （不要な watch/read の取り違え、Provider の誤用など）も機械的に検出する。
+
+# riverpod_lint 3.1.0 は custom_lint から analysis_server_plugin へ移行したため、
+# トップレベルの plugins で登録する。これにより `flutter analyze` に相乗りでき、
+# 別コマンド（dart run custom_lint）を CI に持つ必要がなくなる。
+plugins:
+  riverpod_lint: ^3.1.0
+
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  plugins:
-    - custom_lint
-
   language:
     strict-casts: true
     strict-inference: true

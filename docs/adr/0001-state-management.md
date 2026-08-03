@@ -17,8 +17,10 @@
 
 **Riverpod 3 系を、`@riverpod` コード生成（`riverpod_generator`）で採用する。**
 非同期状態は `AsyncValue<T>` で表現し、Provider / `Notifier` / `AsyncNotifier` は
-`@riverpod` アノテーションから生成する。あわせて `riverpod_lint`（`custom_lint` 経由）を
-有効化し、Riverpod 固有の規約違反を機械的に検出する。
+`@riverpod` アノテーションから生成する。あわせて `riverpod_lint` を
+`analysis_options.yaml` のトップレベル `plugins` で有効化し、Riverpod 固有の規約違反を
+`flutter analyze` から機械的に検出する（3.1.0 で `custom_lint` から
+`analysis_server_plugin` へ移行しているため。詳細は [ADR-0005](0005-ci.md)）。
 DI は Provider のオーバーライドで行い、テスト時にリポジトリをモックへ差し替える。
 
 実務の多くのプロジェクトはコード生成方式を採用しているため、本リポジトリでもそれに揃える。
@@ -55,7 +57,7 @@ Riverpod 側に漏れる。かといって `StatefulWidget` に戻すと `TextEd
 | `riverpod_generator` / `riverpod_lint` | 4.x / 3.x |
 | `freezed` / `freezed_annotation` | 3.2.x / 3.1.x |
 | `analyzer` | 8.x |
-| `custom_lint` | 0.8.x |
+| `analysis_server_plugin`（`riverpod_lint` の実行基盤） | 0.3.x |
 
 > 補足：各パッケージの「最新の最新（例: riverpod 3.4.x）」は Dart 3.12+ を要求するため、
 > Dart 3.11.5 では**その一つ手前のメジャー最新**が選択される。実務上の最新機能は網羅できる。

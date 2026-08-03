@@ -125,8 +125,8 @@ ReviewDraft … 新規・更新入力（id を持たない）
 | 対応OS | iOS 13.0以上（Flutter 既定の deployment target を据え置き。iOS 16 以降でしか使えない API に依存しておらず、対象端末を狭める技術的理由がないため）。Android はビルド可能な状態を CI（debug APK）で維持 |
 | パフォーマンス | 一覧は `ListView.separated` の遅延生成に載せ、行は `const` とプライベート `StatelessWidget` へ抽出して不要な rebuild を避ける（`_buildXxx` のようなビルダー関数にしない）。詳細画面は一覧全体ではなく `reviewById(id)` を購読する。端末内のレビュー件数に収まる小規模前提のため、`select` による購読の細分化までは行わない |
 | テスト容易性 | ドメイン層をインターフェース越しに差し替え可能にし、ユースケースを外部依存なしでテストできること |
-| 品質ゲート | CI（analyze / custom_lint / format / test / Android debug ビルド）を通過しないコードはmainにマージしない。生成物（`*.g.dart` / `*.freezed.dart`）は git 管理外のため、CI は毎回 `build_runner` で再生成してから検査する（＝「再生成できること」自体を品質ゲートに含める） |
-| 可読性 | custom_lint / riverpod_lint（analysis_options.yaml）で規約を機械的に強制する。`strict-casts` / `strict-inference` / `strict-raw-types` を有効化する |
+| 品質ゲート | CI ジョブ `analyze / format / test / build` を main の**必須ステータスチェック**に指定し、通過しないコードはmainにマージできない状態を設定側でも担保する。生成物（`*.g.dart` / `*.freezed.dart`）は git 管理外のため、CI は毎回 `build_runner` で再生成してから検査する（＝「再生成できること」自体を品質ゲートに含める） |
+| 可読性 | `analysis_options.yaml` の厳格ルールと `riverpod_lint`（トップレベル `plugins` で登録し `flutter analyze` から実行）で規約を機械的に強制する。`strict-casts` / `strict-inference` / `strict-raw-types` を有効化する |
 | セットアップ | clone 後 `flutter run` のみで全画面を確認できる（既定はデモモード。APIキーもネットワークも不要）。実 API を叩く場合のみ Google Books API キーをローカル配置する（キーは git 管理外）。手順は README に記載 |
 
 ## 8. 技術選定（サマリ）
@@ -145,7 +145,7 @@ ReviewDraft … 新規・更新入力（id を持たない）
 | ネットワーク | dio（手書きクライアント）+ Google Books API | [ADR-0008](adr/0008-book-search-api.md) |
 | デモモード | `Flavor.demo` + `DemoBookRepository`（同梱 JSON アセット） | [ADR-0009](adr/0009-demo-mode.md) |
 | エラー設計 | sealed class（`AppException`） | [ADR-0007](adr/0007-error-handling.md) |
-| CI | GitHub Actions（build_runner → analyze → custom_lint → format → test → build） | [ADR-0005](adr/0005-ci.md) |
+| CI | GitHub Actions（build_runner → analyze → format → test → build）を main の必須ステータスチェックに指定 | [ADR-0005](adr/0005-ci.md) |
 | （未導入）認証 | スコープ外。導入する場合の置き場所（secure storage / `redirect` / dio Interceptor）のみ確定させてある | [ADR-0010](adr/0010-auth-strategy.md) Proposed |
 | （廃止）APIスキーマ駆動 | OpenAPI + swagger_parser + Prism | [ADR-0006](adr/0006-schema-driven.md) Superseded |
 
