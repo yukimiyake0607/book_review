@@ -17,8 +17,16 @@ class FakeBookRepository implements BookRepository {
   /// 完了させるまで検索を待たせるゲート。loading 状態を観測するために使う。
   Completer<void>? gate;
 
+  /// キーワードごとに応答や完了タイミングを作り分けたい場合に差し込むフック。
+  /// 指定すると [results] / [error] / [gate] より優先される
+  /// （連打時に先行の検索結果を破棄する挙動の検証などに使う）。
+  Future<List<Book>> Function(String keyword)? onSearch;
+
   @override
   Future<List<Book>> search(String keyword) async {
+    if (onSearch != null) {
+      return onSearch!(keyword);
+    }
     if (gate != null) {
       await gate!.future;
     }

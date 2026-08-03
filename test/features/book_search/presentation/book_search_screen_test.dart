@@ -88,15 +88,91 @@ void main() {
     });
   });
 
-  test('BookSearchController: 空文字では検索しない', () {
-    final container = ProviderContainer(
-      overrides: [
-        bookRepositoryProvider.overrideWithValue(FakeBookRepository()),
-      ],
-    );
-    addTearDown(container.dispose);
+  group('BookSearchController の状態遷移', () {
+    ProviderContainer containerWith(FakeBookRepository fake) {
+      final container = ProviderContainer(
+        overrides: [bookRepositoryProvider.overrideWithValue(fake)],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
 
-    final state = container.read(bookSearchControllerProvider);
-    expect(state.hasSearched, isFalse);
+    test('空文字では検索しない', () {
+      final container = containerWith(FakeBookRepository());
+
+      final state = container.read(bookSearchControllerProvider);
+      expect(state.hasSearched, isFalse);
+    });
+
+    test('検索開始で AsyncLoading になり、成功すると AsyncData へ遷移する', () async {
+      final gate = Completer<void>();
+      final container = containerWith(
+        FakeBookRepository(
+          results: const [
+            Book(id: '1', title: 'リーダブルコード', authors: ['Boswell']),
+          ],
+          gate: gate,
+        ),
+      );
+
+      final searching = container
+          .read(bookSearchControllerProvider.notifier)
+          .search('code');
+
+      expect(
+        container.read(bookSearchControllerProvider).books,
+        isA<AsyncLoading<List<Book>>>(),
+      );
+
+      gate.complete();
+      await searching;
+
+      final state = container.read(bookSearchControllerProvider);
+      expect(state.books, isA<AsyncData<List<Book>>>());
+      expect(state.books.requireValue.single.title, 'リーダブルコード');
+    });
+
+    test('リポジトリが失敗すると AsyncError へ遷移する', () async {
+      final container = containerWith(
+        FakeBookRepository(error: const NetworkException()),
+      );
+
+      await container
+          .read(bookSearchControllerProvider.notifier)
+          .search('code');
+
+      final state = container.read(bookSearchControllerProvider);
+      expect(state.books, isA<AsyncError<List<Book>>>());
+      expect(state.books.error, isA<NetworkException>());
+    });
+
+    test('検索語が変わった後に先行の検索が完了しても、その結果は破棄する', () async {
+      final slowGate = Completer<void>();
+      final fastGate = Completer<void>();
+      final fake = FakeBookRepository()
+        ..onSearch = (keyword) async {
+          if (keyword == 'slow') {
+            await slowGate.future;
+            return const [Book(id: 'slow', title: '先行の検索結果', authors: [])];
+          }
+          await fastGate.future;
+          return const [Book(id: 'fast', title: '後発の検索結果', authors: [])];
+        };
+      final container = containerWith(fake);
+      final controller = container.read(bookSearchControllerProvider.notifier);
+
+      // 先行の検索が終わらないうちに次の検索を始める（連打の再現）。
+      final slow = controller.search('slow');
+      final fast = controller.search('fast');
+
+      fastGate.complete();
+      await fast;
+      slowGate.complete();
+      await slow;
+
+      final state = container.read(bookSearchControllerProvider);
+      expect(state.keyword, 'fast');
+      expect(state.books.requireValue.single.title, '後発の検索結果');
+    });
   });
 }
