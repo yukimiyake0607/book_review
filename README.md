@@ -19,13 +19,23 @@ clone して `flutter run` するだけで全画面を触れます（書籍検�
 
 ### スクリーンショット
 
-| マイレビュー | 書籍検索（初期） | 書籍検索（結果） | 書籍検索（結果なし） | レビュー登録 |
-| --- | --- | --- | --- | --- |
-| <img src="docs/screenshots/review_list.png" width="300" alt="マイレビュー画面"> | <img src="docs/screenshots/book_search_empty.png" width="300" alt="書籍検索画面（初期）"> | <img src="docs/screenshots/book_search_results.png" width="300" alt="書籍検索画面（結果）"> | <img src="docs/screenshots/book_search_no_results.png" width="300" alt="書籍検索画面（結果なし）"> | <img src="docs/screenshots/review_create.png" width="300" alt="レビュー登録画面"> |
+#### レビュー
+
+| マイレビュー | レビュー登録 |
+| --- | --- |
+| <img src="docs/screenshots/review_list.png" width="300" alt="マイレビュー画面"> | <img src="docs/screenshots/review_create.png" width="300" alt="レビュー登録画面"> |
+
+#### 書籍検索
+
+| 初期 | 結果あり | 結果なし |
+| --- | --- | --- |
+| <img src="docs/screenshots/book_search_empty.png" width="270" alt="書籍検索画面（初期）"> | <img src="docs/screenshots/book_search_results.png" width="270" alt="書籍検索画面（結果あり）"> | <img src="docs/screenshots/book_search_no_results.png" width="270" alt="書籍検索画面（結果なし）"> |
 
 #### 操作デモ（書籍検索〜レビュー登録）
 
-<video src="docs/screenshots/search_to_review.mp4" width="300" controls></video>
+<img src="docs/screenshots/search_to_review.gif" width="300" alt="書籍を検索してレビューを登録するまでの操作デモ">
+
+高画質版（mp4）：[docs/screenshots/search_to_review.mp4](docs/screenshots/search_to_review.mp4)
 
 ## 設計方針
 
