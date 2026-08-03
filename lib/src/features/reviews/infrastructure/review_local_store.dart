@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,9 +34,20 @@ class ReviewLocalStore {
     } on Object {
       // FormatException だけでなく、`[1]` のような不正構造による型キャスト失敗
       // （TypeError＝Error 系）も「破損した保存データ」として破棄する。
-      _prefs.remove(_storageKey);
+      _discardCorrupted();
       return const [];
     }
+  }
+
+  /// 破損データの後始末。
+  ///
+  /// `remove()` は端末への書き出しが非同期だが、メモリ上のキャッシュは同期で
+  /// 消えるため、この直後の読み出しには即座に反映される。書き出しに失敗しても
+  /// 「空として扱う」という [read] の結果は変わらず、次回起動時に同じ経路で
+  /// もう一度破棄されるだけなので、完了は待たず失敗も伝播させない
+  /// （best-effort のクリーンアップのために [read] を非同期化しない）。
+  void _discardCorrupted() {
+    unawaited(_prefs.remove(_storageKey).catchError((Object _) => false));
   }
 
   /// 一覧をまるごと上書き保存する。
