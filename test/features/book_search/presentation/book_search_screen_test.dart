@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:book_review/src/core/error/app_exception.dart';
+import 'package:book_review/src/core/riverpod/retry_policy.dart';
 import 'package:book_review/src/features/book_search/domain/book.dart';
 import 'package:book_review/src/features/book_search/infrastructure/book_repository_impl.dart';
 import 'package:book_review/src/features/book_search/presentation/book_search_controller.dart';
@@ -14,6 +15,8 @@ import '../../../support/fake_repositories.dart';
 Future<void> _pump(WidgetTester tester, FakeBookRepository fake) async {
   await tester.pumpWidget(
     ProviderScope(
+      // アプリ（bootstrap）と同じ設定で動かす（ADR-0007）。
+      retry: noRetry,
       overrides: [bookRepositoryProvider.overrideWithValue(fake)],
       child: const MaterialApp(home: BookSearchScreen()),
     ),
@@ -91,6 +94,7 @@ void main() {
   group('BookSearchController の状態遷移', () {
     ProviderContainer containerWith(FakeBookRepository fake) {
       final container = ProviderContainer(
+        retry: noRetry,
         overrides: [bookRepositoryProvider.overrideWithValue(fake)],
       );
       addTearDown(container.dispose);

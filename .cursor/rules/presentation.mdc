@@ -23,7 +23,8 @@ class BookSearchController extends _$BookSearchController {
 ```
 
 - 非同期は `AsyncValue` で loading / error / data を表す。取得は `AsyncValue.guard` を使い、生の try/catch を書かない。
-- ユースケースがある操作は UseCase Provider を、単純な取得/委譲は repository Provider を `ref.read` で呼ぶ。参照する型は domain の interface（`BookRepository` 等）に依存し、infrastructure の実装クラス型は持たない。
+- `AsyncNotifier` の `build()` では失敗をそのまま throw する（フレームワークが `AsyncError` にする）。ここで try/catch して代替値へ逃がさない。
+- ユースケースがある操作は UseCase Provider を、単純な取得/委譲は repository Provider を `ref.read` で呼ぶ。**受け取る型は domain の interface**（`BookRepository` 等）で、実装クラス型は持たない（Provider を読むための import は可。architecture.mdc「Provider の宣言位置」）。
 
 ## レビューの保存・削除（書き込み完了後に反映）
 

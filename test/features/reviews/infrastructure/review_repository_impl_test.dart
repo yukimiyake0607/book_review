@@ -1,7 +1,7 @@
 import 'package:book_review/src/core/error/app_exception.dart';
 import 'package:book_review/src/features/reviews/domain/rating.dart';
 import 'package:book_review/src/features/reviews/domain/review_draft.dart';
-import 'package:book_review/src/features/reviews/infrastructure/review_local_cache.dart';
+import 'package:book_review/src/features/reviews/infrastructure/review_local_store.dart';
 import 'package:book_review/src/features/reviews/infrastructure/review_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +18,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
-    repository = ReviewRepositoryImpl(ReviewLocalCache(prefs));
+    repository = ReviewRepositoryImpl(ReviewLocalStore(prefs));
   });
 
   ReviewDraft draft({
@@ -63,7 +63,7 @@ void main() {
       final created = await repository.create(draft());
 
       final reread = await ReviewRepositoryImpl(
-        ReviewLocalCache(prefs),
+        ReviewLocalStore(prefs),
       ).fetchAll();
 
       expect(reread, hasLength(1));
@@ -113,7 +113,7 @@ void main() {
       await repository.delete(created.id);
 
       expect(await repository.fetchAll(), isEmpty);
-      expect(ReviewLocalCache(prefs).read(), isEmpty);
+      expect(ReviewLocalStore(prefs).read(), isEmpty);
     });
 
     test('存在しない id は NotFoundException（黙って成功させない）', () async {
@@ -154,17 +154,6 @@ void main() {
         () => repository.fetchById('local-unknown'),
         throwsA(isA<NotFoundException>()),
       );
-    });
-
-    test('cachedReviews も新着順で返す', () async {
-      final oldest = await repository.create(draft(bookTitle: '1冊目'));
-      await tick();
-      final newest = await repository.create(draft(bookTitle: '2冊目'));
-
-      expect(repository.cachedReviews().map((r) => r.id), [
-        newest.id,
-        oldest.id,
-      ]);
     });
   });
 }

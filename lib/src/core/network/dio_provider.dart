@@ -1,6 +1,7 @@
-import 'package:book_review/src/core/env/app_env.dart';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../env/app_env.dart';
 
 part 'dio_provider.g.dart';
 

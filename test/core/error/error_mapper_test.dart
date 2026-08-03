@@ -48,6 +48,12 @@ void main() {
       expect(mapDioException(Exception('x')), isA<UnknownException>());
     });
 
+    // リポジトリ実装は `on Object` で受けるため、Exception だけでなく
+    // Error 系（不正なレスポンス構造による型キャスト失敗など）もここへ来る。
+    test('Error 系も UnknownException になる', () {
+      expect(mapDioException(ArgumentError('broken')), isA<UnknownException>());
+    });
+
     test('429 は ServerException（上限メッセージ）になる', () {
       final error = DioException(
         requestOptions: requestOptions,

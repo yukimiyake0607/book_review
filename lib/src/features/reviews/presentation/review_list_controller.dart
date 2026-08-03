@@ -1,38 +1,35 @@
-import 'package:book_review/src/features/reviews/application/save_review_use_case.dart';
-import 'package:book_review/src/features/reviews/domain/review.dart';
-import 'package:book_review/src/features/reviews/domain/review_draft.dart';
-import 'package:book_review/src/features/reviews/domain/review_repository.dart';
-import 'package:book_review/src/features/reviews/infrastructure/review_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../application/save_review_use_case.dart';
+import '../domain/review.dart';
+import '../domain/review_draft.dart';
+import '../domain/review_repository.dart';
+import '../infrastructure/review_repository_impl.dart';
 
 part 'review_list_controller.g.dart';
 
+/// レビュー一覧の状態を保持するコントローラ（presentation 層）。
+///
+/// 一覧はホーム画面だけでなく詳細画面（[reviewByIdProvider]）からも参照され、
+/// アプリ起動中は同じ内容を見せ続けたい状態のため `keepAlive` で保持する
+/// （破棄と再読込みを繰り返しても、ローカルから同じ結果を読み直すだけになる）。
 @Riverpod(keepAlive: true)
 class ReviewListController extends _$ReviewListController {
+  /// 書き込み系の操作から使う。実行時に1度読むだけでよいので `read`。
   ReviewRepository get _repository => ref.read(reviewRepositoryProvider);
+
   @override
-  Future<List<Review>> build() async {
-    try {
-      return await _repository.fetchAll();
-    } on Exception {
-      final cached = _repository.cachedReviews();
-      if (cached.isNotEmpty) {
-        return cached;
-      }
-      rethrow;
-    }
-  }
+  Future<List<Review>> build() =>
+      ref.watch(reviewRepositoryProvider).fetchAll();
 
   /// プルリフレッシュ等での再取得で使用。
   Future<void> refresh() async {
-    state = await AsyncValue.guard(
-      () => _repository.fetchAll(forceRefresh: true),
-    );
+    state = await AsyncValue.guard(_repository.fetchAll);
   }
 
-  ///レビューを新規作成する
+  /// レビューを新規作成する。
   ///
-  ///保存完了後に一覧へ反映する。失敗時は一覧を変えず例外を再送出する。
+  /// 保存完了後に一覧へ反映する。失敗時は一覧を変えず例外を再送出する。
   Future<void> add(ReviewDraft draft) async {
     final saved = await ref.read(saveReviewUseCaseProvider)(draft: draft);
     final current = state.value ?? const [];

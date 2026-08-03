@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:book_review/src/core/env/app_env.dart';
+import 'package:book_review/src/core/error/app_exception.dart';
+import 'package:book_review/src/core/riverpod/retry_policy.dart';
 import 'package:book_review/src/features/book_search/infrastructure/book_repository_impl.dart';
 import 'package:book_review/src/features/book_search/infrastructure/demo_book_repository.dart';
 import 'package:flutter/services.dart';
@@ -77,6 +79,30 @@ void main() {
     expect(await buildRepository().search('   '), isEmpty);
   });
 
+  test('壊れた同梱データは AppException として送出する（生の例外を漏らさない）', () async {
+    final repository = DemoBookRepository(
+      bundle: _FakeAssetBundle('{"items": "配列ではない"}'),
+      latency: Duration.zero,
+    );
+
+    await expectLater(
+      repository.search('flutter'),
+      throwsA(isA<AppException>()),
+    );
+  });
+
+  test('アセットが見つからない場合も AppException になる', () async {
+    final repository = DemoBookRepository(
+      assetPath: 'assets/demo/does_not_exist.json',
+      latency: Duration.zero,
+    );
+
+    await expectLater(
+      repository.search('flutter'),
+      throwsA(isA<AppException>()),
+    );
+  });
+
   test('同梱アセットが実際に読めて Book に変換できる', () async {
     final repository = DemoBookRepository(latency: Duration.zero);
 
@@ -88,6 +114,7 @@ void main() {
 
   test('デモ環境では同梱データの実装が供給される', () {
     final container = ProviderContainer(
+      retry: noRetry,
       overrides: [appEnvProvider.overrideWithValue(AppEnv.demo)],
     );
     addTearDown(container.dispose);
@@ -97,6 +124,7 @@ void main() {
 
   test('dev 環境では実 API の実装が供給される', () {
     final container = ProviderContainer(
+      retry: noRetry,
       overrides: [appEnvProvider.overrideWithValue(AppEnv.dev)],
     );
     addTearDown(container.dispose);

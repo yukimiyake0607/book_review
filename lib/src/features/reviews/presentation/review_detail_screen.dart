@@ -7,6 +7,7 @@ import '../../../common_widgets/app_error_view.dart';
 import '../../../common_widgets/rating_stars.dart';
 import '../../../core/error/app_exception.dart';
 import '../../../routing/app_router.dart';
+import '../domain/rating.dart';
 import '../domain/review.dart';
 import 'review_list_controller.dart';
 
@@ -109,7 +110,7 @@ class _ReviewDetailBody extends StatelessWidget {
           children: [
             RatingStars(rating: review.rating, size: 24),
             const SizedBox(width: 8),
-            Text('${review.rating.value} / ${5}'),
+            Text('${review.rating.value} / ${Rating.max}'),
           ],
         ),
         const SizedBox(height: 16),

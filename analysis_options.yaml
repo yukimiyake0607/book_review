@@ -26,13 +26,15 @@ analyzer:
   exclude:
     - "**/*.freezed.dart"
     - "**/*.g.dart"
-    - "lib/src/api/generated/**"
 
 linter:
   rules:
     # 可読性・一貫性
     - always_declare_return_types
     - directives_ordering
+    # lib 配下の自パッケージ参照は相対 import に統一する
+    # （package: と相対が混ざると同じ型を二重に import しうるため）
+    - prefer_relative_imports
     - prefer_single_quotes
     - require_trailing_commas
     - sort_child_properties_last

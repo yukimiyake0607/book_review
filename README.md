@@ -126,7 +126,7 @@ flutter test
 | 認証・認可      | スコープ外。導入する場合の置き場所（`flutter_secure_storage` / go_router の `redirect` / dio の Interceptor）は [ADR-0010](docs/adr/0010-auth-strategy.md) に記載 |
 | 複数端末同期     | スコープ外。レビューは端末ローカルのみ                                    |
 | 国際化（i18n）  | 日本語のみ。多言語化は ARB での対応を想定                                |
-| アクセシビリティ   | 基本的な `Semantics` のみ。WCAG 準拠までは未対応                      |
+| アクセシビリティ   | Material 標準ウィジェットが持つセマンティクス（`Text` / `IconButton` の tooltip 等）に依存。明示的な `Semantics` の作り込みと WCAG 準拠は未対応 |
 | 監視・クラッシュ収集 | 未導入。導入時は Firebase Crashlytics を想定                      |
 | パフォーマンス    | 一覧は小規模前提。大規模化時はページング／リスト仮想化を検討                         |
 

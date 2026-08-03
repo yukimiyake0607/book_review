@@ -48,7 +48,7 @@ Riverpod 3 は Provider の `build`（初期化）中に例外が投げられる
 [`noRetry`](../../lib/src/core/riverpod/retry_policy.dart) を渡し、全 Provider の自動リトライを無効化する。**
 
 - `build` で throw するのは [`reviewById`](../../lib/src/features/reviews/presentation/review_list_controller.dart)
-  のローカル `NotFoundException` のみで、変化しないローカルキャッシュへのリトライは無意味
+  のローカル `NotFoundException` のみで、変化しないローカルの保存データへのリトライは無意味
   （ユーザーには待たされた末に同じエラーが出るだけ）。
 - 書籍検索は `search()` メソッド内の `AsyncValue.guard` で失敗を捕捉するため、そもそも
   `build` 失敗ではなくリトライ対象外。レビュー一覧はローカル読みのみで throw しない。

@@ -16,12 +16,18 @@ globs: lib/**/*.dart
 
 | 層 | 責務 |
 |---|---|
-| infrastructure | 外部例外を `mapDioException` で `AppException` へ変換して送出（境界で型付け） |
+| infrastructure | 外部由来の失敗を境界で `AppException` へ変換して送出（HTTP は `mapDioException`、アセット/ストレージは各実装が直接送出） |
 | domain | 入力制約違反は `ValidationException` を送出（値オブジェクトの `parse`） |
 | presentation | `AsyncValue.error` から受け取り、ユーザー向けメッセージへ（`AppErrorView`） |
 
 ## ルール
 
-- 上位層に生の `DioException` を漏らさない（必ず変換済みの `AppException`）。
+- 上位層に生の例外を漏らさない。リポジトリの公開メソッドから出る失敗は必ず `AppException`。
+- 変換の catch は `on Exception` ではなく `on Object` で受ける。DTO のキャスト失敗は `TypeError`（Error 系）で飛ぶため、`on Exception` では取りこぼす。
+- 外部入力は「信頼できない値」として扱い、domain へ入れる前に `parse` を通す（`Rating.parse`）。永続化データも外部入力に含む。
 - ユーザー提示メッセージは `AppException.message`（日本語）を単一の出所にする。
 - 新しい失敗種別が必要なら enum ではなく `AppException` の `final class` を追加する（sealed の網羅性を活かす）。
+
+## 唯一の例外：破損した永続データ
+
+`ReviewLocalStore.read()` だけは例外を握りつぶし、該当キーごと削除して空リストで再開する。ユーザー操作では復旧できず、出し続けてもアプリを使えなくするだけのため。**書き込みの失敗は握りつぶさない**（`UnknownException` を送出。成功扱いにすると再起動時に消失が発覚する）。

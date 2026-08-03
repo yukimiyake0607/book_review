@@ -11,6 +11,7 @@ globs: lib/**/*.dart
 
 - Controller は `@riverpod class Xxx extends _$Xxx`。`build()` で初期状態を返す。
 - Repository / UseCase など状態を持たない依存は `@Riverpod(keepAlive: true)` の関数型 Provider で供給する。
+- Controller は原則 autoDispose（`@riverpod`）。例外として、**複数画面から参照され、アプリ起動中は同じ内容を見せ続けたい一覧状態**は `keepAlive` を許可する（`ReviewListController`）。使う場合は理由をクラスの DartDoc に書く。「なんとなく消えると困る」は理由にしない。
 - 依存取得は原則 `ref.watch`（監視）、アクション実行時は `ref.read`。Controller 内は getter で束ねてよい（`XxxRepository get _repository => ref.read(...)`）。
 - 新規で手動 `Provider(...)` グローバル変数や `StateProvider` を作らない。
 - 生成ファイル `*.g.dart` / `*.freezed.dart` は手動編集禁止。元ファイルを直し `dart run build_runner build` を実行する。

@@ -42,7 +42,7 @@ ADR-0006 の OpenAPI スキーマ駆動（swagger_parser + Prism）を廃止し�
 
 サーバ CRUD を廃止したため、レビューの SoT（Source of Truth）は端末内の `shared_preferences` とする。
 
-- 保存形式は DTO の JSON 配列（[`ReviewLocalCache`](../../lib/src/features/reviews/infrastructure/review_local_cache.dart)）
+- 保存形式は DTO の JSON 配列（[`ReviewLocalStore`](../../lib/src/features/reviews/infrastructure/review_local_store.dart)）
 - 壊れたデータは黙って破棄する
 - ADR-0003 の「サーバが SoT・ローカルはキャッシュ」という前提は、本決定で上書きする
 

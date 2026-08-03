@@ -1,5 +1,7 @@
 import 'package:book_review/src/core/error/app_exception.dart';
+import 'package:book_review/src/core/riverpod/retry_policy.dart';
 import 'package:book_review/src/features/reviews/domain/rating.dart';
+import 'package:book_review/src/features/reviews/domain/review.dart';
 import 'package:book_review/src/features/reviews/domain/review_draft.dart';
 import 'package:book_review/src/features/reviews/infrastructure/review_repository_impl.dart';
 import 'package:book_review/src/features/reviews/presentation/review_list_controller.dart';
@@ -17,6 +19,9 @@ ReviewDraft _draft() => ReviewDraft(
 
 ProviderContainer _container(FakeReviewRepository fake) {
   final container = ProviderContainer(
+    // アプリ（bootstrap）と同じリトライ方針で動かす。既定のままだと Riverpod 3 が
+    // build の失敗を自動リトライし続け、AsyncError を観測できない（ADR-0007）。
+    retry: noRetry,
     overrides: [reviewRepositoryProvider.overrideWithValue(fake)],
   );
   addTearDown(container.dispose);
@@ -68,13 +73,26 @@ void main() {
       expect(container.read(reviewListControllerProvider).value, hasLength(1));
     });
 
-    test('build: fetch 失敗でもキャッシュがあれば表示する', () async {
+    test('build: 読み込みに失敗すると AsyncLoading から AsyncError へ遷移する', () async {
       final fake = FakeReviewRepository()..failFetch = const NetworkException();
-      await fake.create(_draft());
       final container = _container(fake);
 
-      final list = await container.read(reviewListControllerProvider.future);
-      expect(list, hasLength(1));
+      final states = <AsyncValue<List<Review>>>[];
+      container.listen(
+        reviewListControllerProvider,
+        (_, next) => states.add(next),
+        fireImmediately: true,
+      );
+
+      await expectLater(
+        container.read(reviewListControllerProvider.future),
+        throwsA(isA<NetworkException>()),
+      );
+
+      // 失敗はフォールバックせず、そのまま AsyncError として画面へ渡す。
+      expect(states.first, isA<AsyncLoading<List<Review>>>());
+      expect(states.last, isA<AsyncError<List<Review>>>());
+      expect(states.last.error, isA<NetworkException>());
     });
   });
 }
