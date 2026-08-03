@@ -35,13 +35,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # Lint（機械的な規約強制。riverpod_lint は custom_lint 経由で有効化）
+  # Lint（機械的な規約強制。riverpod_lint は analysis_options.yaml の
+  # plugins で登録し、flutter analyze から実行される）
   flutter_lints: ^6.0.0
-  custom_lint: ^0.8.1
   riverpod_lint: ^3.1.0
 
   # コード生成（riverpod / freezed / json_serializable）
-  build_runner: ^2.4.13
+  # 2.15 で --delete-conflicting-outputs が廃止されているため、
+  # CI の手順と食い違わないよう下限を 2.15 系に揃える。
+  build_runner: ^2.15.1
   riverpod_generator: ^4.0.0
   freezed: ^3.2.3
   json_serializable: ^6.9.5

@@ -31,16 +31,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 生成物（*.g.dart / *.freezed.dart）はコミットしないため CI で再生成する
+      # 生成物（*.g.dart / *.freezed.dart）はコミットしないため CI で再生成する。
+      # 依存は build_runner ^2.15.1 に固定してある。2.15 で
+      # --delete-conflicting-outputs は build サブコマンドから廃止され（衝突は自動解決）、
+      # 渡すと警告になるため付けない。
       - name: Generate code
         run: dart run build_runner build
 
+      # riverpod_lint は analysis_options.yaml の plugins で登録しているため、
+      # Riverpod 固有の規約もこのステップで一緒に検査される。
       - name: Analyze
         run: flutter analyze
-
-      # Riverpod 固有の規約は custom_lint（riverpod_lint）で検査する
-      - name: Riverpod lint
-        run: dart run custom_lint
 
       # 生成物は git 管理外なので、git ls-files で対象を絞りフォーマット差分を検査する
       - name: Check formatting

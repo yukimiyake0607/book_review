@@ -14,6 +14,7 @@
 | [0007](0007-error-handling.md) | sealed class によるエラー設計 | Accepted |
 | [0008](0008-book-search-api.md) | OpenAPI 廃止後の公開 API＋ローカル永続化 | Accepted |
 | [0009](0009-demo-mode.md) | APIキー不要のデモモード | Accepted |
+| [0010](0010-auth-strategy.md) | 認証を導入する場合の設計方針 | Proposed |
 
 ## テンプレート
 

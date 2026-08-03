@@ -3,11 +3,11 @@
 | 項目 | 内容 |
 |---|---|
 | ドキュメント種別 | 要件定義書（docs/requirements.md） |
-| バージョン | 1.2 |
+| バージョン | 1.3 |
 | 作成日 | 2026-07-27 |
-| 更新日 | 2026-07-31 |
+| 更新日 | 2026-08-03 |
 | 作成者 | Yuki Miyake（[@yukimiyake0607](https://github.com/yukimiyake0607)） |
-| ステータス | スコープ確定（#12 / #15 反映済み） |
+| ステータス | 実装と同期済み（#18 / #19 / #20 反映） |
 
 ---
 
@@ -18,6 +18,8 @@
 読書記録という平易な題材を選んだのは、題材理解にコストをかけず、**アーキテクチャ・状態設計・エラーハンドリング・テストといった「どう作るか」に読み手の注意を集中させる**ためである。したがって機能はあえて少数に絞り、その代わり各機能をドメイン層からUI層まで一貫して作り込む。設計上の意思決定はすべて [`docs/adr/`](adr/) に記録している。
 
 当初は OpenAPI スキーマ駆動（swagger_parser + Prism）を主眼のひとつとしていたが、公開書籍 API ＋ローカル永続化へ移行した（[ADR-0006](adr/0006-schema-driven.md) Superseded / [ADR-0008](adr/0008-book-search-api.md)）。「スキーマ合意の再現」より、**実ネットワーク・DTO/mapper・sealed エラー・ローカル SoT** の一貫した実装を見せる方針に更新している。
+
+さらに、既定のエントリポイントを **APIキー不要のデモモード**（`Flavor.demo`）とした（[ADR-0009](adr/0009-demo-mode.md)）。設計を読んでもらうためのリポジトリで、Google Cloud でのキー発行が入口の摩擦になっていては目的と矛盾するためである。デモモードでは書籍検索のみを同梱データで動かし、**差し替えは `bookRepositoryProvider` の中だけで完結する**。application / presentation はどちらの実装が供給されるかを知らない。この構成自体が §3 の依存性逆転の実演を兼ねている。
 
 読む順序の推奨：本書 → [`docs/adr/`](adr/) → 1つの機能フロー（書籍検索→レビュー登録）を presentation〜infrastructure まで縦に読む。
 
@@ -37,7 +39,7 @@
 
 | ID | 機能 | 概要 |
 |---|---|---|
-| F-01 | 書籍検索 | キーワードで書籍を検索する。Google Books API を手書きの dio クライアントで呼び出し、結果一覧を表示。ローディング/エラー/空/成功の各状態を明示的に扱う |
+| F-01 | 書籍検索 | キーワードで書籍を検索する。Google Books API を手書きの dio クライアントで呼び出し、結果一覧を表示。ローディング/エラー/空/成功の各状態を明示的に扱う。既定のデモモードでは同梱データを返す `DemoBookRepository` に差し替わるが、DTO / mapper / Controller / UI は実 API 経路と共通（[ADR-0009](adr/0009-demo-mode.md)） |
 | F-02 | レビュー登録・編集・削除 | 検索結果から書籍を選び、評価（★1〜5）・感想・読了日を登録。`shared_preferences` へ永続化（CRUD）。書き込み完了後に一覧へ反映し、失敗時は一覧を変えずユーザーに通知する（楽観的更新は行わない） |
 | F-03 | レビュー一覧・詳細 | 登録済みレビューの一覧表示（新着順）と詳細表示。プルリフレッシュで再読み込み |
 
@@ -50,11 +52,12 @@
 
 ### 2.3 スコープ外
 
-- ユーザー登録・認証（本デモでは単一ユーザー前提。認証を入れる場合の設計方針のみADRに記述する）
+- ユーザー登録・認証（本デモでは単一ユーザー前提。認証を入れる場合の設計方針のみ [ADR-0010](adr/0010-auth-strategy.md) に記述する）
 - 複数端末同期・サーバ上のレビュー共有
 - SNS共有、他ユーザーとの交流
 - 課金・広告・プッシュ通知
 - タグ・シリーズ管理などの拡張メタデータ
+- 検索結果のページネーション（1リクエスト20件固定。1画面分で題材として十分であり、使わない拡張ポイントをインターフェースに残さない。必要になった時点で `BookRepository` の契約を拡張する）
 
 ## 3. アーキテクチャ方針
 
@@ -78,8 +81,10 @@ presentation  ── application ── domain ◄── infrastructure
 
 | 領域 | 方針 | ADR |
 |---|---|---|
-| 書籍検索 | Google Books API。手書き dio + Freezed DTO + `toDomain()`。APIキーは `dart-define-from-file` で注入（リポジトリに直書きしない） | [ADR-0008](adr/0008-book-search-api.md) |
-| レビュー | `shared_preferences` に DTO の JSON 配列として保存し、これを単一の情報源（SoT）とする | [ADR-0003](adr/0003-local-cache.md)、[ADR-0008](adr/0008-book-search-api.md) |
+| 書籍検索 | Google Books API。手書き dio + Freezed DTO + `toDomain()` | [ADR-0008](adr/0008-book-search-api.md) |
+| デモモード | 既定の `lib/main.dart` は同梱データ（`assets/demo/`）を返す `DemoBookRepository` を供給する。差し替えは `bookRepositoryProvider` 内のみで行い、DTO / mapper / UI は実 API と共通 | [ADR-0009](adr/0009-demo-mode.md) |
+| APIキー | 実 API 経路（`main_dev.dart` / `main_prod.dart`）でのみ使う。`dart-define-from-file` で注入し、リポジトリに直書きしない。未指定時は `key` クエリを付けずに呼ぶ（キーの有無を分岐で持たない） | [ADR-0008](adr/0008-book-search-api.md)、[ADR-0009](adr/0009-demo-mode.md) |
+| レビュー | `shared_preferences` に DTO の JSON 配列として保存し、これを単一の情報源（SoT）とする。デモモードでも本物を使う（ローカル完結でキーも不要なため、偽装する理由がない） | [ADR-0003](adr/0003-local-cache.md)、[ADR-0008](adr/0008-book-search-api.md) |
 
 OpenAPI / swagger_parser / Prism は採用後に廃止した。経緯は [ADR-0006](adr/0006-schema-driven.md)（Superseded）と [ADR-0008](adr/0008-book-search-api.md) を参照。
 
@@ -89,6 +94,14 @@ OpenAPI / swagger_parser / Prism は採用後に廃止した。経緯は [ADR-00
 - 失敗は sealed class（`AppException`）で型として扱う。例外の握りつぶしを禁止する
 - **F-01（検索）**：`AsyncValue` の error を画面で表示する（エラー設計の主役）
 - **F-02（レビュー保存・削除）**：永続化完了まで待ち、成功後に一覧へ反映。失敗時は一覧を変えず `AppException.message` を通知する（**楽観的更新・ロールバックは行わない**／ADR-0008 方針B）
+
+### 握りつぶし禁止の唯一の例外
+
+**破損した永続データの読み込みのみ、例外を握りつぶして空として扱う**（`ReviewLocalCache.read()`）。保存済み JSON が壊れている状態はユーザー操作では復旧できず、エラーを出し続けてもアプリを使えなくするだけであるため、該当キーごと削除して空リストから再開する。逆に**書き込みの失敗は握りつぶさない**（`setString` が false を返したら `UnknownException` を送出する）。成功扱いにすると、再起動時に初めてレビューの消失が発覚するためである。根拠は [ADR-0003](adr/0003-local-cache.md)。
+
+### フレームワークによる暗黙の再試行を無効化する
+
+Riverpod 3 は Provider の build 失敗を既定で自動リトライする。本アプリはこれを `ProviderScope(retry: noRetry)` で全体無効化する（`lib/bootstrap.dart`）。失敗は `AsyncValue.error` として画面に出し、**再試行するかどうかはユーザーが `AppErrorView` の再試行ボタンで決める**設計であり、裏で暗黙に再送されると「エラー表示のまま通信が走り続ける」状態になるためである。根拠は [ADR-0007](adr/0007-error-handling.md)。
 
 判断の根拠は [ADR-0007](adr/0007-error-handling.md) / [ADR-0008](adr/0008-book-search-api.md) に記述する。
 
@@ -109,12 +122,12 @@ ReviewDraft … 新規・更新入力（id を持たない）
 
 | 分類 | 要件 |
 |---|---|
-| 対応OS | iOS 16以上（開発者アカウント保有）。Androidはビルド可能な状態を維持 |
-| パフォーマンス | 一覧のスクロールで不要なrebuildを起こさない（const・キー・プロバイダ粒度で最適化） |
+| 対応OS | iOS 13.0以上（Flutter 既定の deployment target を据え置き。iOS 16 以降でしか使えない API に依存しておらず、対象端末を狭める技術的理由がないため）。Android はビルド可能な状態を CI（debug APK）で維持 |
+| パフォーマンス | 一覧は `ListView.separated` の遅延生成に載せ、行は `const` とプライベート `StatelessWidget` へ抽出して不要な rebuild を避ける（`_buildXxx` のようなビルダー関数にしない）。詳細画面は一覧全体ではなく `reviewById(id)` を購読する。端末内のレビュー件数に収まる小規模前提のため、`select` による購読の細分化までは行わない |
 | テスト容易性 | ドメイン層をインターフェース越しに差し替え可能にし、ユースケースを外部依存なしでテストできること |
-| 品質ゲート | CI（analyze / format / test）を通過しないコードはmainにマージしない |
-| 可読性 | custom_lint / riverpod_lint（analysis_options.yaml）で規約を機械的に強制する |
-| セットアップ | clone 後は Google Books API キーのローカル配置が必要（キーは git 管理外）。手順は README に記載 |
+| 品質ゲート | CI ジョブ `analyze / format / test / build` を main の**必須ステータスチェック**に指定し、通過しないコードはmainにマージできない状態を設定側でも担保する。生成物（`*.g.dart` / `*.freezed.dart`）は git 管理外のため、CI は毎回 `build_runner` で再生成してから検査する（＝「再生成できること」自体を品質ゲートに含める） |
+| 可読性 | `analysis_options.yaml` の厳格ルールと `riverpod_lint`（トップレベル `plugins` で登録し `flutter analyze` から実行）で規約を機械的に強制する。`strict-casts` / `strict-inference` / `strict-raw-types` を有効化する |
+| セットアップ | clone 後 `flutter run` のみで全画面を確認できる（既定はデモモード。APIキーもネットワークも不要）。実 API を叩く場合のみ Google Books API キーをローカル配置する（キーは git 管理外）。手順は README に記載 |
 
 ## 8. 技術選定（サマリ）
 
@@ -122,15 +135,18 @@ ReviewDraft … 新規・更新入力（id を持たない）
 
 | 領域 | 採用技術 | ADR |
 |---|---|---|
-| フレームワーク | Flutter（stable）/ Dart | — |
+| フレームワーク | Flutter / Dart（`mise` でバージョン固定） | [ADR-0001](adr/0001-state-management.md) |
 | 状態管理 | Riverpod（`@riverpod` コード生成、AsyncValue中心） | [ADR-0001](adr/0001-state-management.md) |
+| Widget ローカル状態 | flutter_hooks（`hooks_riverpod`）。画面内で完結する入力状態のみ担当し、共有・永続化される状態は Riverpod に置く | [ADR-0001](adr/0001-state-management.md) |
 | アーキテクチャ | レイヤード＋依存性逆転（feature-first） | [ADR-0002](adr/0002-layered-architecture.md) |
 | レビュー永続化 | shared_preferences（SoT） | [ADR-0003](adr/0003-local-cache.md) |
 | ルーティング | go_router | [ADR-0004](adr/0004-routing.md) |
 | モデル | freezed / json_serializable（DTO） | — |
 | ネットワーク | dio（手書きクライアント）+ Google Books API | [ADR-0008](adr/0008-book-search-api.md) |
+| デモモード | `Flavor.demo` + `DemoBookRepository`（同梱 JSON アセット） | [ADR-0009](adr/0009-demo-mode.md) |
 | エラー設計 | sealed class（`AppException`） | [ADR-0007](adr/0007-error-handling.md) |
-| CI | GitHub Actions（analyze → format → test → build） | [ADR-0005](adr/0005-ci.md) |
+| CI | GitHub Actions（build_runner → analyze → format → test → build）を main の必須ステータスチェックに指定 | [ADR-0005](adr/0005-ci.md) |
+| （未導入）認証 | スコープ外。導入する場合の置き場所（secure storage / `redirect` / dio Interceptor）のみ確定させてある | [ADR-0010](adr/0010-auth-strategy.md) Proposed |
 | （廃止）APIスキーマ駆動 | OpenAPI + swagger_parser + Prism | [ADR-0006](adr/0006-schema-driven.md) Superseded |
 
 ## 9. テスト方針
@@ -159,5 +175,9 @@ ReviewDraft … 新規・更新入力（id を持たない）
 | 中盤 | OpenAPI + モックでの F-01/F-02 骨格（後に #12 で撤去） |
 | #12 | OpenAPI / 生成クライアント撤去、スタブ化（地ならし） |
 | #15 | Google Books 実装、レビューのローカル永続化、方針B（楽観的更新廃止）、ADR-0007/0008 更新 |
+| #18 | Riverpod 3 の自動リトライを `noRetry` で全体無効化（ADR-0007 更新） |
+| #19 | APIキー不要のデモモード（`Flavor.demo` / `DemoBookRepository`）、ADR-0009 |
+| #20 | README のスクリーンショット・操作デモ整備 |
+| 本書 v1.3 | 実装との乖離を解消（デモモード反映、対応OS・CI 記述の実態合わせ、認証方針を ADR-0010 化、未使用 `page` 引数の削除、mapper / CRUD / loading テストの追加） |
 
-> Should（F-04/F-05）は余力に応じて実施する。
+> Should（F-04/F-05）は余力に応じて実施する。本書 v1.3 時点では未実装。

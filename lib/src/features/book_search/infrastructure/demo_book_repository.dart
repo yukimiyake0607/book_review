@@ -32,10 +32,8 @@ class DemoBookRepository implements BookRepository {
   List<Book>? _books;
 
   /// 同梱データから該当する書籍を返す。該当なしは空リスト。
-  ///
-  /// 実 API と違いページングは行わないため、[page] は無視する。
   @override
-  Future<List<Book>> search(String keyword, {int page = 1}) async {
+  Future<List<Book>> search(String keyword) async {
     await Future<void>.delayed(latency);
 
     final query = keyword.trim().toLowerCase();

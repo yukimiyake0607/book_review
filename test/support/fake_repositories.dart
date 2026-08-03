@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:book_review/src/core/error/app_exception.dart';
 import 'package:book_review/src/features/book_search/domain/book.dart';
 import 'package:book_review/src/features/book_search/domain/book_repository.dart';
@@ -7,13 +9,27 @@ import 'package:book_review/src/features/reviews/domain/review_repository.dart';
 
 /// テスト用のインメモリ書籍リポジトリ。ネットワークに依存しない。
 class FakeBookRepository implements BookRepository {
-  FakeBookRepository({this.results = const [], this.error});
+  FakeBookRepository({this.results = const [], this.error, this.gate});
 
   List<Book> results;
   AppException? error;
 
+  /// 完了させるまで検索を待たせるゲート。loading 状態を観測するために使う。
+  Completer<void>? gate;
+
+  /// キーワードごとに応答や完了タイミングを作り分けたい場合に差し込むフック。
+  /// 指定すると [results] / [error] / [gate] より優先される
+  /// （連打時に先行の検索結果を破棄する挙動の検証などに使う）。
+  Future<List<Book>> Function(String keyword)? onSearch;
+
   @override
-  Future<List<Book>> search(String keyword, {int page = 1}) async {
+  Future<List<Book>> search(String keyword) async {
+    if (onSearch != null) {
+      return onSearch!(keyword);
+    }
+    if (gate != null) {
+      await gate!.future;
+    }
     if (error != null) {
       throw error!;
     }
