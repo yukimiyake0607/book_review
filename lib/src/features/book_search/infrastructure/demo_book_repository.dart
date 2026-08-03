@@ -45,16 +45,24 @@ class DemoBookRepository implements BookRepository {
     return books.where((book) => _matches(book, query)).toList();
   }
 
+  /// 同梱データを読み、実 API 実装と同じ DTO / mapper を通して domain へ変換する。
+  ///
+  /// JSON の破損・構造不一致は「デモデータが使えない」状態でしかないため、
+  /// infrastructure の境界で [UnknownException] に型付けする。一方でアセット自体の
+  /// 欠落は Flutter が `FlutterError`（Error 系）で通知する。同梱漏れはビルドの
+  /// 不備＝バグなので捕まえず、グローバルハンドラへ伝播させる（ADR-0007）。
   Future<List<Book>> _load() async {
     try {
       final raw = await _bundle.loadString(assetPath);
-      final json = jsonDecode(raw) as Map<String, dynamic>;
-      final dto = GoogleBooksResponseDto.fromJson(json);
+      // 素のキャストは型不一致を TypeError（Error 系）にしてしまうため、
+      // 外部データの構造は自分で確かめ、Exception として表す。
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('デモ用データが JSON オブジェクトではありません。');
+      }
+      final dto = GoogleBooksResponseDto.fromJson(decoded);
       return dto.items?.map((item) => item.toDomain()).toList() ?? const [];
-    } on Object {
-      // アセットの欠落・JSON 破損はどちらも「デモデータが使えない」状態でしかない。
-      // 不正な構造による型キャスト失敗（TypeError＝Error 系）も含めて受け、
-      // 実 API 実装と同じく infrastructure の境界で AppException に型付けする。
+    } on Exception {
       throw const UnknownException('デモ用データを読み込めませんでした。');
     }
   }

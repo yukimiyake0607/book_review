@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'src/app.dart';
 import 'src/core/env/app_env.dart';
+import 'src/core/error/global_error_handler.dart';
 import 'src/core/riverpod/retry_policy.dart';
 import 'src/core/storage/shared_preferences_provider.dart';
 
@@ -14,12 +15,18 @@ import 'src/core/storage/shared_preferences_provider.dart';
 Future<void> bootstrap(AppEnv env) async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 伝播してきた Error（＝バグ）の受け口を、アプリの処理を始める前に用意する。
+  installGlobalErrorHandlers();
+
   final prefs = await SharedPreferences.getInstance();
 
   runApp(
     ProviderScope(
       // Riverpod 3 の自動リトライを全体で無効化する（Issue #9 / ADR-0007）。
       retry: noRetry,
+      // build 内の Error は Riverpod が AsyncError に変えて伝播を止めるため、
+      // この経路だけオブザーバでグローバルハンドラへ合流させる（ADR-0007）。
+      observers: const [UncaughtProviderErrorObserver()],
       overrides: [
         appEnvProvider.overrideWithValue(env),
         sharedPreferencesProvider.overrideWithValue(prefs),

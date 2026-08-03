@@ -48,10 +48,14 @@ void main() {
       expect(mapDioException(Exception('x')), isA<UnknownException>());
     });
 
-    // リポジトリ実装は `on Object` で受けるため、Exception だけでなく
-    // Error 系（不正なレスポンス構造による型キャスト失敗など）もここへ来る。
-    test('Error 系も UnknownException になる', () {
-      expect(mapDioException(ArgumentError('broken')), isA<UnknownException>());
+    // リポジトリ実装は `on Exception` で受けるため、通信の失敗以外に
+    // レスポンスの構造不一致（パース失敗）もここへ来る。
+    // Error 系は引数の型（Exception）で弾かれるため、実行時のテストは持たない。
+    test('パース失敗（Exception 系）も UnknownException になる', () {
+      expect(
+        mapDioException(const FormatException('壊れた JSON')),
+        isA<UnknownException>(),
+      );
     });
 
     test('429 は ServerException（上限メッセージ）になる', () {

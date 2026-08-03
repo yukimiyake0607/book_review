@@ -150,6 +150,22 @@ void main() {
       expect(state.books.error, isA<NetworkException>());
     });
 
+    test('Error は AsyncError に載せず、そのまま送出する', () async {
+      // Error はバグなので UI の error 状態へ流さず、グローバルハンドラへ
+      // 伝播させる（ADR-0007）。guard が飲み込まないことを固定する。
+      final container = containerWith(
+        FakeBookRepository(error: StateError('バグ')),
+      );
+
+      await expectLater(
+        container.read(bookSearchControllerProvider.notifier).search('code'),
+        throwsA(isA<StateError>()),
+      );
+
+      final state = container.read(bookSearchControllerProvider);
+      expect(state.books, isA<AsyncLoading<List<Book>>>());
+    });
+
     test('検索語が変わった後に先行の検索が完了しても、その結果は破棄する', () async {
       final slowGate = Completer<void>();
       final fastGate = Completer<void>();

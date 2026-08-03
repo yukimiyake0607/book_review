@@ -46,10 +46,11 @@ class BookRepositoryImpl implements BookRepository {
       if (items == null || items.isEmpty) return const [];
 
       return items.map((item) => item.toDomain()).toList();
-    } on Object catch (e) {
-      // 通信失敗（DioException）だけでなく、想定外のレスポンス構造による
-      // 型キャスト失敗（TypeError＝Error 系）もここで AppException に変える。
-      // `on Exception` では後者を取りこぼし、生の例外が上位へ漏れてしまう。
+    } on Exception catch (e) {
+      // 通信失敗（DioException）と、想定外のレスポンス構造による DTO のパース失敗
+      // （`checked: true` により CheckedFromJsonException）をここで AppException に変える。
+      // Error（＝コードのバグ）は捕まえず、上位へ伝播させてグローバルハンドラへ
+      // 届かせる（ADR-0007）。
       throw mapDioException(e);
     }
   }

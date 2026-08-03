@@ -73,6 +73,7 @@ presentation ── application ── domain ◄── infrastructure
 | 書籍検索      | `AsyncValue` で loading / error / data を扱い、`data` 内の空リストを空結果として表示する   |
 | レビュー保存・削除 | 書き込み完了後に一覧へ反映。楽観的更新・ロールバックは行わない                                      |
 | 失敗の型      | sealed class の `AppException`（網羅分岐）                                  |
+| catch の範囲  | `on Exception` のみ。`Error`（コードのバグ）は捕まえずグローバルハンドラへ伝播させる（[ADR-0007](docs/adr/0007-error-handling.md)） |
 
 ## 技術スタック
 
@@ -104,6 +105,7 @@ presentation ── application ── domain ◄── infrastructure
 - **楽観的更新を実装後に撤回した** — ロールバックの複雑さが、ローカル保存の速度で得られる体感差に見合わなかった（[ADR-0008](docs/adr/0008-book-search-api.md) 方針B）
 - **OpenAPI スキーマ駆動を撤回した** — モックサーバ前提だと clone しても動かせず、デモとしての目的と衝突した（[ADR-0006](docs/adr/0006-schema-driven.md) Superseded → [ADR-0008](docs/adr/0008-book-search-api.md)）
 - **Riverpod 3 の既定挙動を無効化した** — Provider の自動リトライが「ユーザーが再試行を決める」エラー設計と衝突するため、`ProviderScope(retry: noRetry)` で切った（[ADR-0007](docs/adr/0007-error-handling.md)）
+- **`on Object` で全部の失敗を型付けする実装を撤回した** — 「生の例外を漏らさない」ためにバグ（`Error`）まで `UnknownException` に変換していたが、それはユーザーが復旧できない失敗を「予期しないエラー」に化かして痕跡を消す実装だった。外部入力の型不一致を `Exception` 側（`checked: true` / `FormatException`）へ寄せることで、`on Exception` でも漏れを防げると判断して切り替えた（[ADR-0007](docs/adr/0007-error-handling.md)）
 - **CI の `custom_lint` ステップを廃止した** — `riverpod_lint` 3.1.0 が `analysis_server_plugin` へ移行しており、`custom_lint` 経由ではルールが 0 個しか登録されず「常に成功する空振りのステップ」になっていた。意図的な違反コードで検出されないことを確認したうえで、`analysis_options.yaml` の `plugins` 登録 + `flutter analyze` に一本化した（[ADR-0005](docs/adr/0005-ci.md)）
 
 AI に一貫した実装をさせるため、アーキテクチャと層ごとの規約は [.cursor/rules/](.cursor/rules/) に明文化しています。PR には [テンプレート](.github/pull_request_template.md)の「AI活用メモ」欄で、提案の採否を都度残しています。
@@ -127,7 +129,7 @@ flutter test
 | 複数端末同期     | スコープ外。レビューは端末ローカルのみ                                    |
 | 国際化（i18n）  | 日本語のみ。多言語化は ARB での対応を想定                                |
 | アクセシビリティ   | Material 標準ウィジェットが持つセマンティクス（`Text` / `IconButton` の tooltip 等）に依存。明示的な `Semantics` の作り込みと WCAG 準拠は未対応 |
-| 監視・クラッシュ収集 | 未導入。導入時は Firebase Crashlytics を想定                      |
+| 監視・クラッシュ収集 | 送信は未導入。`Error` を集約するグローバルハンドラ（`installGlobalErrorHandlers()`）までは配線済みで、Firebase Crashlytics へ送る1行を足す位置を1箇所に限定している（[ADR-0007](docs/adr/0007-error-handling.md)） |
 | パフォーマンス    | 一覧は小規模前提。大規模化時はページング／リスト仮想化を検討                         |
 
 

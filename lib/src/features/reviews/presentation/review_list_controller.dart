@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/error/guard_policy.dart';
 import '../application/save_review_use_case.dart';
 import '../domain/review.dart';
 import '../domain/review_draft.dart';
@@ -24,7 +25,8 @@ class ReviewListController extends _$ReviewListController {
 
   /// プルリフレッシュ等での再取得で使用。
   Future<void> refresh() async {
-    state = await AsyncValue.guard(_repository.fetchAll);
+    // AppException だけを error 状態に載せる。Error はここで飲まず伝播させる。
+    state = await AsyncValue.guard(_repository.fetchAll, onlyAppException);
   }
 
   /// レビューを新規作成する。

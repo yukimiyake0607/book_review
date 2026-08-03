@@ -94,5 +94,21 @@ void main() {
       expect(states.last, isA<AsyncError<List<Review>>>());
       expect(states.last.error, isA<NetworkException>());
     });
+
+    test('refresh: Error は AsyncError に載せず、一覧も変えずに送出する', () async {
+      final fake = FakeReviewRepository();
+      final container = _container(fake);
+      await container.read(reviewListControllerProvider.future);
+      final notifier = container.read(reviewListControllerProvider.notifier);
+      await notifier.add(_draft());
+
+      fake.failFetch = StateError('バグ');
+      await expectLater(notifier.refresh(), throwsA(isA<StateError>()));
+
+      // Error は AppErrorView に見せる失敗ではないため、直前のデータを保つ。
+      final state = container.read(reviewListControllerProvider);
+      expect(state, isA<AsyncData<List<Review>>>());
+      expect(state.value, hasLength(1));
+    });
   });
 }

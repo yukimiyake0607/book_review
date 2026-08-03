@@ -7,12 +7,22 @@ import 'package:book_review/src/features/reviews/domain/review.dart';
 import 'package:book_review/src/features/reviews/domain/review_draft.dart';
 import 'package:book_review/src/features/reviews/domain/review_repository.dart';
 
+/// 指定された失敗をそのまま送出する。
+///
+/// 失敗を `Object` で受けるのは、本実装が `AppException` だけでなく `Error`
+/// （＝コードのバグ）も投げうるため（ADR-0007）。`throw` 文だと
+/// `only_throw_errors` に触れるので [Error.throwWithStackTrace] を使う。
+Never _throwAsIs(Object error) =>
+    Error.throwWithStackTrace(error, StackTrace.current);
+
 /// テスト用のインメモリ書籍リポジトリ。ネットワークに依存しない。
 class FakeBookRepository implements BookRepository {
   FakeBookRepository({this.results = const [], this.error, this.gate});
 
   List<Book> results;
-  AppException? error;
+
+  /// 送出させたい失敗。`AppException` のほか `Error` も渡せる。
+  Object? error;
 
   /// 完了させるまで検索を待たせるゲート。loading 状態を観測するために使う。
   Completer<void>? gate;
@@ -31,7 +41,7 @@ class FakeBookRepository implements BookRepository {
       await gate!.future;
     }
     if (error != null) {
-      throw error!;
+      _throwAsIs(error!);
     }
     return results;
   }
@@ -50,15 +60,16 @@ class FakeReviewRepository implements ReviewRepository {
   final List<Review> _items;
   int _sequence = 0;
 
-  AppException? failCreate;
-  AppException? failUpdate;
-  AppException? failDelete;
-  AppException? failFetch;
+  /// 送出させたい失敗。`AppException` のほか `Error` も渡せる。
+  Object? failCreate;
+  Object? failUpdate;
+  Object? failDelete;
+  Object? failFetch;
 
   @override
   Future<List<Review>> fetchAll() async {
     if (failFetch != null) {
-      throw failFetch!;
+      _throwAsIs(failFetch!);
     }
     return _sortedByNewest();
   }
@@ -75,7 +86,7 @@ class FakeReviewRepository implements ReviewRepository {
   @override
   Future<Review> create(ReviewDraft draft) async {
     if (failCreate != null) {
-      throw failCreate!;
+      _throwAsIs(failCreate!);
     }
     final now = DateTime.now();
     final review = Review(
@@ -96,7 +107,7 @@ class FakeReviewRepository implements ReviewRepository {
   @override
   Future<Review> update(String id, ReviewDraft draft) async {
     if (failUpdate != null) {
-      throw failUpdate!;
+      _throwAsIs(failUpdate!);
     }
     final index = _items.indexWhere((r) => r.id == id);
     if (index < 0) {
@@ -117,7 +128,7 @@ class FakeReviewRepository implements ReviewRepository {
   @override
   Future<void> delete(String id) async {
     if (failDelete != null) {
-      throw failDelete!;
+      _throwAsIs(failDelete!);
     }
     final before = _items.length;
     _items.removeWhere((r) => r.id == id);

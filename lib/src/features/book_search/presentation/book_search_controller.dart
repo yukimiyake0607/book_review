@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/error/guard_policy.dart';
 import '../domain/book.dart';
 import '../domain/book_repository.dart';
 import '../infrastructure/book_repository_impl.dart';
@@ -28,7 +29,11 @@ class BookSearchController extends _$BookSearchController {
       hasSearched: true,
       books: const AsyncLoading(),
     );
-    final result = await AsyncValue.guard(() => _repository.search(trimmed));
+    // AppException だけを error 状態に載せる。Error はここで飲まず伝播させる。
+    final result = await AsyncValue.guard(
+      () => _repository.search(trimmed),
+      onlyAppException,
+    );
     // 検索語が変わっていなければ結果を反映（連打時の取り違えを防ぐ）。
     if (state.keyword == trimmed) {
       state = state.copyWith(books: result);
