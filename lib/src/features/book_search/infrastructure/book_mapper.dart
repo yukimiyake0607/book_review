@@ -1,5 +1,5 @@
-import 'package:book_review/src/features/book_search/domain/book.dart';
-import 'package:book_review/src/features/book_search/infrastructure/dto/google_books_dto.dart';
+import '../domain/book.dart';
+import 'dto/google_books_dto.dart';
 
 extension GoogleBookItemDtoMapper on GoogleBookItemDto {
   Book toDomain() {
