@@ -3,6 +3,7 @@
 - ステータス: Accepted
 - 日付: 2026-07-28
 - 更新: 2026-07-31（Issue #15 / ADR-0008 により「キャッシュ」から「単一の情報源」へ前提を更新）
+- 更新: 2026-08-03（上記の前提変更に名前を追随させ、`ReviewLocalCache` を `ReviewLocalStore` へ改名）
 
 ## コンテキスト
 
@@ -16,9 +17,10 @@ OpenAPI / サーバ同期を廃止したため（ADR-0006 → ADR-0008）、ロ�
 
 **`shared_preferences` にレビュー一覧を DTO の JSON 配列として保存し、これを単一の情報源（SoT）とする。**
 
-- 保存/読み出しは [`ReviewLocalCache`](../../lib/src/features/reviews/infrastructure/review_local_cache.dart) に閉じ込める
+- 保存/読み出しは [`ReviewLocalStore`](../../lib/src/features/reviews/infrastructure/review_local_store.dart) に閉じ込める
 - 壊れたデータは黙って破棄し、空一覧として扱う
-- ストレージキーにバージョン（例: `reviews_v1`）を含め、将来のフォーマット変更に備える
+- ストレージキーにバージョン（`review_v1`）を含め、将来のフォーマット変更に備える
+- 名前は Store とする。Cache だと「失っても正本から戻せる控え」に読めるが、実際はここが正本であり、消えたらデータは戻らない
 
 ## 検討した代替案
 

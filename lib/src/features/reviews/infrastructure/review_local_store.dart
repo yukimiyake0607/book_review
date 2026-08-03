@@ -7,11 +7,14 @@ import '../domain/review.dart';
 import 'dto/review_dto.dart';
 import 'review_mapper.dart';
 
-/// SharedPreferences へのレビュー一覧への読み書きを閉じ込める
+/// SharedPreferences へのレビュー一覧の読み書きを閉じ込める。
+///
+/// キャッシュ（別に正本があり、失っても再取得できる控え）ではなく、レビューの
+/// 単一の情報源（SoT）そのものを保持する（ADR-0008）。ここを失うとデータは戻らない。
 ///
 /// キーにバージョン（v1）を含め、将来フォーマットを変えても衝突しにくくする。
-class ReviewLocalCache {
-  ReviewLocalCache(this._prefs);
+class ReviewLocalStore {
+  ReviewLocalStore(this._prefs);
   final SharedPreferences _prefs;
 
   static const _storageKey = 'review_v1';
