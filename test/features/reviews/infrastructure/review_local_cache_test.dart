@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:book_review/src/features/reviews/domain/rating.dart';
 import 'package:book_review/src/features/reviews/domain/review.dart';
 import 'package:book_review/src/features/reviews/infrastructure/review_local_cache.dart';
@@ -41,6 +43,28 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('review_v1', '{not-json');
 
+    final result = ReviewLocalCache(prefs).read();
+    expect(result, isEmpty);
+    expect(prefs.getString('review_v1'), isNull);
+  });
+
+  test('JSON としては読めるが rating が範囲外のデータも破棄する', () async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'review_v1',
+      jsonEncode([
+        {
+          'id': 'local-1',
+          'bookId': 'b1',
+          'bookTitle': 'リーダブルコード',
+          'rating': 9, // ドメインの制約（1〜5）を外れた値
+          'createdAt': '2026-07-30T00:00:00.000',
+          'updatedAt': '2026-07-30T00:00:00.000',
+        },
+      ]),
+    );
+
+    // 範囲外の評価をドメインへ通さない。壊れたデータと同じく破棄する。
     final result = ReviewLocalCache(prefs).read();
     expect(result, isEmpty);
     expect(prefs.getString('review_v1'), isNull);

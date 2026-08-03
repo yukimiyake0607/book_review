@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:book_review/src/core/error/app_exception.dart';
-import 'package:book_review/src/features/reviews/domain/review.dart';
-import 'package:book_review/src/features/reviews/infrastructure/dto/review_dto.dart';
-import 'package:book_review/src/features/reviews/infrastructure/review_mapper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/error/app_exception.dart';
+import '../domain/review.dart';
+import 'dto/review_dto.dart';
+import 'review_mapper.dart';
 
 /// SharedPreferences へのレビュー一覧への読み書きを閉じ込める
 ///

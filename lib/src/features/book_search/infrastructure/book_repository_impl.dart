@@ -1,13 +1,14 @@
-import 'package:book_review/src/core/env/app_env.dart';
-import 'package:book_review/src/core/error/error_mapper.dart';
-import 'package:book_review/src/core/network/dio_provider.dart';
-import 'package:book_review/src/features/book_search/domain/book.dart';
-import 'package:book_review/src/features/book_search/domain/book_repository.dart';
-import 'package:book_review/src/features/book_search/infrastructure/book_mapper.dart';
-import 'package:book_review/src/features/book_search/infrastructure/demo_book_repository.dart';
-import 'package:book_review/src/features/book_search/infrastructure/dto/google_books_dto.dart';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../core/env/app_env.dart';
+import '../../../core/error/error_mapper.dart';
+import '../../../core/network/dio_provider.dart';
+import '../domain/book.dart';
+import '../domain/book_repository.dart';
+import 'book_mapper.dart';
+import 'demo_book_repository.dart';
+import 'dto/google_books_dto.dart';
 
 part 'book_repository_impl.g.dart';
 
@@ -45,7 +46,10 @@ class BookRepositoryImpl implements BookRepository {
       if (items == null || items.isEmpty) return const [];
 
       return items.map((item) => item.toDomain()).toList();
-    } on Exception catch (e) {
+    } on Object catch (e) {
+      // 通信失敗（DioException）だけでなく、想定外のレスポンス構造による
+      // 型キャスト失敗（TypeError＝Error 系）もここで AppException に変える。
+      // `on Exception` では後者を取りこぼし、生の例外が上位へ漏れてしまう。
       throw mapDioException(e);
     }
   }

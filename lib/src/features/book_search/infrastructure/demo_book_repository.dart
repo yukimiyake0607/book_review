@@ -1,10 +1,12 @@
 import 'dart:convert';
 
-import 'package:book_review/src/features/book_search/domain/book.dart';
-import 'package:book_review/src/features/book_search/domain/book_repository.dart';
-import 'package:book_review/src/features/book_search/infrastructure/book_mapper.dart';
-import 'package:book_review/src/features/book_search/infrastructure/dto/google_books_dto.dart';
 import 'package:flutter/services.dart';
+
+import '../../../core/error/app_exception.dart';
+import '../domain/book.dart';
+import '../domain/book_repository.dart';
+import 'book_mapper.dart';
+import 'dto/google_books_dto.dart';
 
 /// デモモード（`Flavor.demo`）用の書籍リポジトリ。
 ///
@@ -44,10 +46,17 @@ class DemoBookRepository implements BookRepository {
   }
 
   Future<List<Book>> _load() async {
-    final raw = await _bundle.loadString(assetPath);
-    final json = jsonDecode(raw) as Map<String, dynamic>;
-    final dto = GoogleBooksResponseDto.fromJson(json);
-    return dto.items?.map((item) => item.toDomain()).toList() ?? const [];
+    try {
+      final raw = await _bundle.loadString(assetPath);
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final dto = GoogleBooksResponseDto.fromJson(json);
+      return dto.items?.map((item) => item.toDomain()).toList() ?? const [];
+    } on Object {
+      // アセットの欠落・JSON 破損はどちらも「デモデータが使えない」状態でしかない。
+      // 不正な構造による型キャスト失敗（TypeError＝Error 系）も含めて受け、
+      // 実 API 実装と同じく infrastructure の境界で AppException に型付けする。
+      throw const UnknownException('デモ用データを読み込めませんでした。');
+    }
   }
 
   bool _matches(Book book, String query) {

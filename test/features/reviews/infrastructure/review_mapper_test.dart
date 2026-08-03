@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:book_review/src/core/error/app_exception.dart';
 import 'package:book_review/src/features/reviews/domain/rating.dart';
 import 'package:book_review/src/features/reviews/domain/review.dart';
 import 'package:book_review/src/features/reviews/infrastructure/dto/review_dto.dart';
@@ -57,6 +58,13 @@ void main() {
     expect(restored.finishedOn, isNull);
     expect(restored.hasComment, isFalse);
     expect(restored, original);
+  });
+
+  test('範囲外の rating を持つ DTO は ValidationException で弾く', () {
+    // 保存データは信頼できない入力として扱う（assert では release で素通りする）。
+    final dto = buildReview().toDto().copyWith(rating: 9);
+
+    expect(dto.toDomain, throwsA(isA<ValidationException>()));
   });
 
   test('JSON 文字列を経由しても DateTime が保たれる', () {
