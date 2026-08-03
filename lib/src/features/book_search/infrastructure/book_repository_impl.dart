@@ -33,23 +33,30 @@ class BookRepositoryImpl implements BookRepository {
   @override
   Future<List<Book>> search(String keyword) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
+      // ジェネリクスで Map を指定すると、配列や文字列の JSON が Dio 内部の
+      // `as T?` で TypeError（Error 系）になり、ここでは捕まえられない。
+      // 外部入力のトップレベル型は自分で確かめ、Exception として表す（ADR-0007）。
+      final response = await _dio.get<dynamic>(
         'volumes',
         queryParameters: {'q': keyword, 'maxResults': _maxResults},
       );
 
       final data = response.data;
       if (data == null) return const [];
+      if (data is! Map<String, dynamic>) {
+        throw const FormatException('書籍検索のレスポンスが JSON オブジェクトではありません。');
+      }
 
       final dto = GoogleBooksResponseDto.fromJson(data);
       final items = dto.items;
       if (items == null || items.isEmpty) return const [];
 
       return items.map((item) => item.toDomain()).toList();
-    } on Object catch (e) {
-      // 通信失敗（DioException）だけでなく、想定外のレスポンス構造による
-      // 型キャスト失敗（TypeError＝Error 系）もここで AppException に変える。
-      // `on Exception` では後者を取りこぼし、生の例外が上位へ漏れてしまう。
+    } on Exception catch (e) {
+      // 通信失敗（DioException）と、想定外のレスポンス構造による DTO のパース失敗
+      // （`checked: true` により CheckedFromJsonException）をここで AppException に変える。
+      // Error（＝コードのバグ）は捕まえず、上位へ伝播させてグローバルハンドラへ
+      // 届かせる（ADR-0007）。
       throw mapDioException(e);
     }
   }

@@ -48,6 +48,57 @@ void main() {
     expect(prefs.getString('review_v1'), isNull);
   });
 
+  test('保存値が文字列でなくても空リストになり、キーが消える', () async {
+    // 旧フォーマットが残っているケース。getString だと TypeError（Error 系）で
+    // 落ちるため、型は自分で確かめて「破損データ」として扱う（ADR-0007）。
+    SharedPreferences.setMockInitialValues({'review_v1': 42});
+    final prefs = await SharedPreferences.getInstance();
+
+    final result = ReviewLocalStore(prefs).read();
+    expect(result, isEmpty);
+    expect(prefs.get('review_v1'), isNull);
+  });
+
+  test('JSON が配列でない場合も空リストになり、キーが消える', () async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('review_v1', '{"id": "local-1"}');
+
+    final result = ReviewLocalStore(prefs).read();
+    expect(result, isEmpty);
+    expect(prefs.getString('review_v1'), isNull);
+  });
+
+  test('配列の要素が JSON オブジェクトでない場合も空リストになる', () async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('review_v1', '[1]');
+
+    final result = ReviewLocalStore(prefs).read();
+    expect(result, isEmpty);
+    expect(prefs.getString('review_v1'), isNull);
+  });
+
+  test('DTO のフィールド型不一致も破損データとして破棄する', () async {
+    // CheckedFromJsonException は FormatException に揃えてから握りつぶす。
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'review_v1',
+      jsonEncode([
+        {
+          'id': 'local-1',
+          'bookId': 'b1',
+          'bookTitle': 'リーダブルコード',
+          'rating': '文字列', // int であるべき
+          'createdAt': '2026-07-30T00:00:00.000',
+          'updatedAt': '2026-07-30T00:00:00.000',
+        },
+      ]),
+    );
+
+    final result = ReviewLocalStore(prefs).read();
+    expect(result, isEmpty);
+    expect(prefs.getString('review_v1'), isNull);
+  });
+
   test('JSON としては読めるが rating が範囲外のデータも破棄する', () async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(

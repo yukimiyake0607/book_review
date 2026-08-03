@@ -1,0 +1,14 @@
+# コード生成の設定。
+#
+# json_serializable の checked を有効にし、fromJson のフィールド変換失敗を
+# CheckedFromJsonException（Exception 系）として送出させる。既定の生成コードは
+# `json['id'] as String` のような素のキャストで、外部 JSON の型不一致が
+# TypeError（Error 系）になる。本アプリは Error を「バグ」としてグローバル
+# ハンドラへ伝播させる方針のため、外部入力起因の失敗は Exception 側へ寄せる
+# 必要がある（ADR-0007）。
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          checked: true

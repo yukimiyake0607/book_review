@@ -12,6 +12,13 @@ globs: lib/**/*.dart
 - `sealed class AppException implements Exception`（ユーザー向け `message` を持つ）。
 - 具体は `final class`：`NetworkException` / `NotFoundException` / `ServerException` / `ValidationException` / `UnknownException`。
 
+## Exception と Error を分ける（ADR-0007）
+
+| 失敗の性質 | 型 | 扱い |
+|---|---|---|
+| 起こりうる失敗（通信断・不正な入力・破損した保存データ） | `Exception` | 境界で `AppException` に型付けし、UI で見せる |
+| コードのバグ（型の取り違え・null 参照・同梱漏れ） | `Error` | 捕まえない。グローバルハンドラ（`core/error/global_error_handler.dart`）まで伝播させる |
+
 ## 流れ（層ごとの責務）
 
 | 層 | 責務 |
@@ -23,11 +30,16 @@ globs: lib/**/*.dart
 ## ルール
 
 - 上位層に生の例外を漏らさない。リポジトリの公開メソッドから出る失敗は必ず `AppException`。
-- 変換の catch は `on Exception` ではなく `on Object` で受ける。DTO のキャスト失敗は `TypeError`（Error 系）で飛ぶため、`on Exception` では取りこぼす。
+- **catch は `on Exception`**。`on Object` / on 句なしの catch は書かない（`Error` を巻き込み、バグが「予期しないエラー」に化ける）。
+- **`Error` はどの層でも捕まえない**。ログのために一度受ける場合も rethrow する。
+- **外部入力の失敗は `Exception` 側へ寄せる**。素の `as` キャストは型不一致を `TypeError`（Error 系）にしてしまうため書かない。
+  - DTO は json_serializable の `checked: true`（`build.yaml`）で生成し、`fromJson` の失敗を `CheckedFromJsonException` にする。
+  - `jsonDecode` の結果や `SharedPreferences` の値は型を確かめ、想定外なら `FormatException` を送出する。
+- `AsyncValue.guard` には `onlyAppException`（`core/error/guard_policy.dart`）を渡す。既定は `Object` を捕まえるため、渡さないと `Error` が `AsyncValue.error` に載ってグローバルハンドラへ届かない。
 - 外部入力は「信頼できない値」として扱い、domain へ入れる前に `parse` を通す（`Rating.parse`）。永続化データも外部入力に含む。
 - ユーザー提示メッセージは `AppException.message`（日本語）を単一の出所にする。
 - 新しい失敗種別が必要なら enum ではなく `AppException` の `final class` を追加する（sealed の網羅性を活かす）。
 
 ## 唯一の例外：破損した永続データ
 
-`ReviewLocalStore.read()` だけは例外を握りつぶし、該当キーごと削除して空リストで再開する。ユーザー操作では復旧できず、出し続けてもアプリを使えなくするだけのため。**書き込みの失敗は握りつぶさない**（`UnknownException` を送出。成功扱いにすると再起動時に消失が発覚する）。
+`ReviewLocalStore.read()` だけは失敗を握りつぶし、該当キーごと削除して空リストで再開する。ユーザー操作では復旧できず、出し続けてもアプリを使えなくするだけのため。握りつぶす対象は **`FormatException` と `ValidationException` だけ**（`CheckedFromJsonException` は `FormatException` に変換してから受ける）。それ以外の Exception はキーを消さず伝播させ、`Error` も伝播させる。**書き込みの失敗は握りつぶさない**（`UnknownException` を送出。成功扱いにすると再起動時に消失が発覚する）。

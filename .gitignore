@@ -59,3 +59,6 @@ lcov.info
 
 # Local dart-defines（APIキー等。コミット禁止）
 dart_defines.json
+
+# AI コーディング支援ツールがローカルに作る作業ディレクトリ
+.serena/

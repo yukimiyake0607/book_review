@@ -95,9 +95,13 @@ OpenAPI / swagger_parser / Prism は採用後に廃止した。経緯は [ADR-00
 - **F-01（検索）**：`AsyncValue` の error を画面で表示する（エラー設計の主役）
 - **F-02（レビュー保存・削除）**：永続化完了まで待ち、成功後に一覧へ反映。失敗時は一覧を変えず `AppException.message` を通知する（**楽観的更新・ロールバックは行わない**／ADR-0008 方針B）
 
+### 「見せる失敗」と「直す失敗」を分ける
+
+catch は `on Exception` で受け、**`Error`（コードのバグ）は捕まえずグローバルハンドラまで伝播させる**。`Error` をユーザー向けメッセージに変換すると、最も直したい失敗が「予期しないエラー」の陰に隠れるためである。これを成立させるために、外部入力（API レスポンス・端末の保存値・同梱アセット）の型不一致は素のキャスト（`TypeError`）ではなく `Exception`（`CheckedFromJsonException` / `FormatException`）として表す。伝播した `Error` の受け口は `installGlobalErrorHandlers()` に集約する。**送信先（Firebase Crashlytics）は意図的に未導入**で、差し込む位置を1箇所に定めるところまでを範囲とする。根拠は [ADR-0007](adr/0007-error-handling.md)。
+
 ### 握りつぶし禁止の唯一の例外
 
-**破損した永続データの読み込みのみ、例外を握りつぶして空として扱う**（`ReviewLocalStore.read()`）。保存済み JSON が壊れている状態はユーザー操作では復旧できず、エラーを出し続けてもアプリを使えなくするだけであるため、該当キーごと削除して空リストから再開する。逆に**書き込みの失敗は握りつぶさない**（`setString` が false を返したら `UnknownException` を送出する）。成功扱いにすると、再起動時に初めてレビューの消失が発覚するためである。根拠は [ADR-0003](adr/0003-local-cache.md)。
+**破損した永続データの読み込みのみ、失敗を握りつぶして空として扱う**（`ReviewLocalStore.read()`）。保存済み JSON が壊れている状態はユーザー操作では復旧できず、エラーを出し続けてもアプリを使えなくするだけであるため、該当キーごと削除して空リストから再開する。握りつぶす範囲は **FormatException と ValidationException だけ**（DTO の CheckedFromJsonException は FormatException に揃えてから受ける）。それ以外の Exception はキーを消さず上位へ伝え、Error は伝播させる。逆に**書き込みの失敗は握りつぶさない**（`setString` が false を返したら `UnknownException` を送出する）。成功扱いにすると、再起動時に初めてレビューの消失が発覚するためである。根拠は [ADR-0003](adr/0003-local-cache.md)。
 
 ### フレームワークによる暗黙の再試行を無効化する
 

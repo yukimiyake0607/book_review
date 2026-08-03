@@ -5,7 +5,11 @@ import 'app_exception.dart';
 /// 外部由来の例外を、ドメインが扱える [AppException] へ変換する。
 ///
 /// リポジトリ実装はこの関数を通して失敗を型付けし、上位層に生の [DioException] を漏らさない。
-AppException mapDioException(Object error) {
+///
+/// 引数を [Exception] に限っているのは、変換の対象が「想定される失敗」だけである
+/// ことを型で示すため。`Error`（＝コードのバグ）はリポジトリでも捕まえず、
+/// グローバルハンドラへ伝播させる（ADR-0007）。
+AppException mapDioException(Exception error) {
   if (error is AppException) {
     return error;
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:json_annotation/json_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/error/app_exception.dart';
@@ -21,21 +22,47 @@ class ReviewLocalStore {
   static const _storageKey = 'review_v1';
 
   /// 保存済み一覧を読む。壊れていれば空リスト（破棄する）
+  ///
+  /// 端末の保存値は外部入力なので、構造の不一致は素のキャスト（TypeError＝Error 系）
+  /// ではなく [FormatException] / [ValidationException] として表し、それだけを
+  /// 破損データとして破棄する。それ以外の Exception はキーを消さず上位へ伝播させる。
+  /// Error（＝コードのバグ）も握りつぶさない（ADR-0007）。
   List<Review> read() {
     try {
-      // getString 自体も、保存値の型が違えば TypeError を投げうるため try の中で呼ぶ。
-      final raw = _prefs.getString(_storageKey);
-      if (raw == null || raw.isEmpty) return const [];
+      // getString は内部で `as String?` するため、旧フォーマットで別の型が
+      // 入っていると TypeError になる。型は get で受けて自分で確かめる。
+      final stored = _prefs.get(_storageKey);
+      if (stored == null) return const [];
+      if (stored is! String) {
+        throw const FormatException('保存されたレビューが文字列ではありません。');
+      }
+      if (stored.isEmpty) return const [];
 
-      final list = jsonDecode(raw) as List<dynamic>;
-      return list
-          .map((e) => ReviewDto.fromJson(e as Map<String, dynamic>).toDomain())
-          .toList();
-    } on Object {
-      // FormatException だけでなく、`[1]` のような不正構造による型キャスト失敗
-      // （TypeError＝Error 系）も「破損した保存データ」として破棄する。
+      final decoded = jsonDecode(stored);
+      if (decoded is! List) {
+        throw const FormatException('保存されたレビューが配列ではありません。');
+      }
+
+      return decoded.map(_toReview).toList();
+    } on FormatException {
       _discardCorrupted();
       return const [];
+    } on ValidationException {
+      _discardCorrupted();
+      return const [];
+    }
+  }
+
+  Review _toReview(Object? element) {
+    if (element is! Map<String, dynamic>) {
+      throw const FormatException('保存されたレビューが JSON オブジェクトではありません。');
+    }
+    try {
+      return ReviewDto.fromJson(element).toDomain();
+    } on CheckedFromJsonException catch (error) {
+      // checked: true のパース失敗も「破損した保存データ」として扱えるよう、
+      // 握りつぶし対象の FormatException に揃える。
+      throw FormatException('保存されたレビューの形式が不正です: $error');
     }
   }
 
@@ -47,7 +74,16 @@ class ReviewLocalStore {
   /// もう一度破棄されるだけなので、完了は待たず失敗も伝播させない
   /// （best-effort のクリーンアップのために [read] を非同期化しない）。
   void _discardCorrupted() {
-    unawaited(_prefs.remove(_storageKey).catchError((Object _) => false));
+    unawaited(
+      _prefs
+          .remove(_storageKey)
+          .catchError(
+            (Object _) => false,
+            // 見送るのは削除の失敗（Exception）だけ。Error はここでも握りつぶさず、
+            // 未処理の非同期エラーとしてグローバルハンドラへ渡す（ADR-0007）。
+            test: (error) => error is Exception,
+          ),
+    );
   }
 
   /// 一覧をまるごと上書き保存する。
