@@ -17,11 +17,7 @@ void main() {
       (title: null, expected: 'タイトル不明', reason: 'title キーが無い'),
       (title: '', expected: 'タイトル不明', reason: 'title が空文字'),
       (title: '   ', expected: 'タイトル不明', reason: 'title が空白のみ'),
-      (
-        title: '  リーダブルコード  ',
-        expected: 'リーダブルコード',
-        reason: '前後の空白は落とす',
-      ),
+      (title: '  リーダブルコード  ', expected: 'リーダブルコード', reason: '前後の空白は落とす'),
     ];
 
     for (final c in cases) {

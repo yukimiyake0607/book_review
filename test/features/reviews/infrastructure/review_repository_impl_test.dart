@@ -92,10 +92,7 @@ void main() {
     test('コメントを空にする更新も反映される（null で上書きできる）', () async {
       final created = await repository.create(draft());
 
-      final updated = await repository.update(
-        created.id,
-        draft(comment: null),
-      );
+      final updated = await repository.update(created.id, draft(comment: null));
 
       expect(updated.comment, isNull);
       expect(updated.hasComment, isFalse);
