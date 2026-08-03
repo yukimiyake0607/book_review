@@ -13,7 +13,7 @@ class FakeBookRepository implements BookRepository {
   AppException? error;
 
   @override
-  Future<List<Book>> search(String keyword, {int page = 1}) async {
+  Future<List<Book>> search(String keyword) async {
     if (error != null) {
       throw error!;
     }

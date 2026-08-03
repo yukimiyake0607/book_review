@@ -26,18 +26,15 @@ class BookRepositoryImpl implements BookRepository {
 
   final Dio _dio;
 
-  static const _pageSize = 20;
+  /// 1リクエストで取得する件数。ページネーションを行わないため固定値にしている。
+  static const _maxResults = 20;
 
   @override
-  Future<List<Book>> search(String keyword, {int page = 1}) async {
+  Future<List<Book>> search(String keyword) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         'volumes',
-        queryParameters: {
-          'q': keyword,
-          'startIndex': (page - 1) * _pageSize,
-          'maxResults': _pageSize,
-        },
+        queryParameters: {'q': keyword, 'maxResults': _maxResults},
       );
 
       final data = response.data;

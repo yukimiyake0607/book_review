@@ -15,7 +15,7 @@ class BookRepositoryImpl implements BookRepository {
   final Dio _dio;
 
   @override
-  Future<List<Book>> search(String keyword, {int page = 1}) async {
+  Future<List<Book>> search(String keyword) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>('volumes', ...);
       final dto = GoogleBooksResponseDto.fromJson(response.data!);

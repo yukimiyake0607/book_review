@@ -8,5 +8,8 @@ abstract interface class BookRepository {
   /// キーワードで書籍を検索する。
   ///
   /// 該当なしの場合は空リストを返す（「空」は成功状態として扱い、例外にはしない）。
-  Future<List<Book>> search(String keyword, {int page = 1});
+  ///
+  /// ページネーションは契約に含めない。1画面分で題材として十分であり、
+  /// 使わない拡張ポイントを残さないため。必要になった時点でこの契約を拡張する。
+  Future<List<Book>> search(String keyword);
 }
