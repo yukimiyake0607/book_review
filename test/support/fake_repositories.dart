@@ -104,6 +104,7 @@ class FakeReviewRepository implements ReviewRepository {
     }
     final updated = _items[index].copyWith(
       bookTitle: draft.bookTitle,
+      bookThumbnailUrl: draft.bookThumbnailUrl,
       rating: draft.rating,
       comment: draft.comment,
       finishedOn: draft.finishedOn,
