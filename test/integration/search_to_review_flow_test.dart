@@ -1,5 +1,6 @@
 import 'package:book_review/src/app.dart';
 import 'package:book_review/src/core/env/app_env.dart';
+import 'package:book_review/src/core/riverpod/retry_policy.dart';
 import 'package:book_review/src/features/book_search/domain/book.dart';
 import 'package:book_review/src/features/book_search/infrastructure/book_repository_impl.dart';
 import 'package:book_review/src/features/reviews/infrastructure/review_repository_impl.dart';
@@ -20,6 +21,7 @@ void main() {
     final reviewRepo = FakeReviewRepository();
 
     final container = ProviderContainer(
+      retry: noRetry,
       overrides: [
         appEnvProvider.overrideWithValue(AppEnv.dev),
         bookRepositoryProvider.overrideWithValue(bookRepo),

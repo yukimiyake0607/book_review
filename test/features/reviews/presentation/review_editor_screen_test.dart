@@ -1,3 +1,4 @@
+import 'package:book_review/src/core/riverpod/retry_policy.dart';
 import 'package:book_review/src/features/book_search/domain/book.dart';
 import 'package:book_review/src/features/reviews/presentation/review_editor_screen.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ void main() {
   testWidgets('評価を選ばずに登録するとバリデーションで止まる', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
+        // アプリ（bootstrap）と同じ設定で動かす（ADR-0007）。
+        retry: noRetry,
         child: MaterialApp(
           home: ReviewEditorScreen(
             book: Book(
