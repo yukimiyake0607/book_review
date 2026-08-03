@@ -17,8 +17,14 @@ class BookRepositoryImpl implements BookRepository {
   @override
   Future<List<Book>> search(String keyword) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('volumes', ...);
-      final dto = GoogleBooksResponseDto.fromJson(response.data!);
+      // ジェネリクスで Map を指定すると非 Map JSON が TypeError になる
+      final response = await _dio.get<dynamic>('volumes', ...);
+      final data = response.data;
+      if (data == null) return const [];
+      if (data is! Map<String, dynamic>) {
+        throw const FormatException('レスポンスが JSON オブジェクトではありません。');
+      }
+      final dto = GoogleBooksResponseDto.fromJson(data);
       return (dto.items ?? []).map((e) => e.toDomain()).toList();
     } on Exception catch (error) {
       throw mapDioException(error); // 想定される失敗を sealed な AppException へ
@@ -37,6 +43,6 @@ class BookRepositoryImpl implements BookRepository {
   - `jsonDecode` の結果や `SharedPreferences` の値は `is!` で確かめ、想定外なら `FormatException` を送出する。
 - DTO → domain の変換では、外部から来た値を値オブジェクトの `parse` に通す（`Rating.parse`）。永続化データも「信頼できない入力」として扱う。
 - DTO ↔ domain 変換は extension の `toDomain()` / `toDto()` に集約し、変換の散在を防ぐ（`book_mapper.dart` / `review_mapper.dart` 参照）。
-- レビューのローカル永続化は DTO の JSON で保存する（`review_local_store.dart`）。黙って破棄してよいのは `read()` で `on Exception` に入った**破損データだけ**で、該当キーを削除して空リストから再開する。**書き込みの失敗は握りつぶさず** `UnknownException` を送出する（error-handling.mdc）。
+- レビューのローカル永続化は DTO の JSON で保存する（`review_local_store.dart`）。黙って破棄してよいのは `read()` で `FormatException` / `ValidationException` に入った**破損データだけ**で、該当キーを削除して空リストから再開する。それ以外の Exception はキーを消さず伝播させる。**書き込みの失敗は握りつぶさず** `UnknownException` を送出する（error-handling.mdc）。
 - shared_preferences が SoT なので、名前も Cache ではなく Store にする（ADR-0003 / ADR-0008）。
 - Provider は `@Riverpod(keepAlive: true)` の関数型で供給する。

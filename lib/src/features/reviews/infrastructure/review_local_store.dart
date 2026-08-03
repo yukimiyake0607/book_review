@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:json_annotation/json_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/error/app_exception.dart';
@@ -23,8 +24,9 @@ class ReviewLocalStore {
   /// 保存済み一覧を読む。壊れていれば空リスト（破棄する）
   ///
   /// 端末の保存値は外部入力なので、構造の不一致は素のキャスト（TypeError＝Error 系）
-  /// ではなく [FormatException] として表し、`on Exception` で受けて破棄する。
-  /// Error（＝コードのバグ）は握りつぶさず上位へ伝播させる（ADR-0007）。
+  /// ではなく [FormatException] / [ValidationException] として表し、それだけを
+  /// 破損データとして破棄する。それ以外の Exception はキーを消さず上位へ伝播させる。
+  /// Error（＝コードのバグ）も握りつぶさない（ADR-0007）。
   List<Review> read() {
     try {
       // getString は内部で `as String?` するため、旧フォーマットで別の型が
@@ -42,9 +44,10 @@ class ReviewLocalStore {
       }
 
       return decoded.map(_toReview).toList();
-    } on Exception {
-      // JSON の破損（FormatException）や `[1]` のような構造不一致を
-      // 「破損した保存データ」として破棄する。
+    } on FormatException {
+      _discardCorrupted();
+      return const [];
+    } on ValidationException {
       _discardCorrupted();
       return const [];
     }
@@ -54,7 +57,13 @@ class ReviewLocalStore {
     if (element is! Map<String, dynamic>) {
       throw const FormatException('保存されたレビューが JSON オブジェクトではありません。');
     }
-    return ReviewDto.fromJson(element).toDomain();
+    try {
+      return ReviewDto.fromJson(element).toDomain();
+    } on CheckedFromJsonException catch (error) {
+      // checked: true のパース失敗も「破損した保存データ」として扱えるよう、
+      // 握りつぶし対象の FormatException に揃える。
+      throw FormatException('保存されたレビューの形式が不正です: $error');
+    }
   }
 
   /// 破損データの後始末。

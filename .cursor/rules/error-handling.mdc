@@ -42,4 +42,4 @@ globs: lib/**/*.dart
 
 ## 唯一の例外：破損した永続データ
 
-`ReviewLocalStore.read()` だけは失敗を握りつぶし、該当キーごと削除して空リストで再開する。ユーザー操作では復旧できず、出し続けてもアプリを使えなくするだけのため。握りつぶす対象は `on Exception` で受けた範囲（`FormatException` / `ValidationException`）だけで、`Error` は伝播させる。**書き込みの失敗は握りつぶさない**（`UnknownException` を送出。成功扱いにすると再起動時に消失が発覚する）。
+`ReviewLocalStore.read()` だけは失敗を握りつぶし、該当キーごと削除して空リストで再開する。ユーザー操作では復旧できず、出し続けてもアプリを使えなくするだけのため。握りつぶす対象は **`FormatException` と `ValidationException` だけ**（`CheckedFromJsonException` は `FormatException` に変換してから受ける）。それ以外の Exception はキーを消さず伝播させ、`Error` も伝播させる。**書き込みの失敗は握りつぶさない**（`UnknownException` を送出。成功扱いにすると再起動時に消失が発覚する）。

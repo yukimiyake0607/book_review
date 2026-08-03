@@ -16,6 +16,7 @@ class BookSearchController extends _$BookSearchController {
   BookSearchState build() => const BookSearchState();
 
   Future<void> search(String keyword) async {
+    final kw = keyword.trim();
     // 第2引数を省くと Error まで error 状態に載る（guard の既定は Object）
     final result = await AsyncValue.guard(
       () => _repository.search(kw),

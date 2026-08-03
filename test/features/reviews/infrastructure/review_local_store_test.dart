@@ -77,6 +77,28 @@ void main() {
     expect(prefs.getString('review_v1'), isNull);
   });
 
+  test('DTO のフィールド型不一致も破損データとして破棄する', () async {
+    // CheckedFromJsonException は FormatException に揃えてから握りつぶす。
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'review_v1',
+      jsonEncode([
+        {
+          'id': 'local-1',
+          'bookId': 'b1',
+          'bookTitle': 'リーダブルコード',
+          'rating': '文字列', // int であるべき
+          'createdAt': '2026-07-30T00:00:00.000',
+          'updatedAt': '2026-07-30T00:00:00.000',
+        },
+      ]),
+    );
+
+    final result = ReviewLocalStore(prefs).read();
+    expect(result, isEmpty);
+    expect(prefs.getString('review_v1'), isNull);
+  });
+
   test('JSON としては読めるが rating が範囲外のデータも破棄する', () async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(

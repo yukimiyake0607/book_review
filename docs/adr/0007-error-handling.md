@@ -62,7 +62,12 @@ sealed AppException
 - DTO は json_serializable の `checked: true`（[build.yaml](../../build.yaml)）で生成し、
   `fromJson` の失敗を `CheckedFromJsonException`（`Exception` 系）にする
 - 手書きのキャストは書かず、`jsonDecode` の結果や `SharedPreferences` の値は型を確かめて
-  `FormatException` を送出する（[`ReviewLocalStore.read()`](../../lib/src/features/reviews/infrastructure/review_local_store.dart)）
+  `FormatException` を送出する（[`ReviewLocalStore.read()`](../../lib/src/features/reviews/infrastructure/review_local_store.dart)）。
+  HTTP レスポンスのトップレベルも同様で、`Dio.get<Map<...>>` による内部キャストに頼らず
+  `get<dynamic>` ＋ `is! Map` で確かめる（非 Map を `TypeError` にしない）
+- 破損した永続データの破棄は [`ReviewLocalStore.read()`](../../lib/src/features/reviews/infrastructure/review_local_store.dart)
+  に限り、対象は `FormatException` / `ValidationException` のみ（`CheckedFromJsonException` は
+  `FormatException` に揃えてから受ける）。それ以外の Exception はキーを消さず伝播させる
 
 `AsyncValue.guard` は既定で `Object` を捕まえるため、そのままでは `Error` も
 `AsyncValue.error` に載ってしまう。[`onlyAppException`](../../lib/src/core/error/guard_policy.dart)

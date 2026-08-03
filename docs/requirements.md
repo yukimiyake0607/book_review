@@ -101,7 +101,7 @@ catch は `on Exception` で受け、**`Error`（コードのバグ）は捕ま�
 
 ### 握りつぶし禁止の唯一の例外
 
-**破損した永続データの読み込みのみ、失敗を握りつぶして空として扱う**（`ReviewLocalStore.read()`）。保存済み JSON が壊れている状態はユーザー操作では復旧できず、エラーを出し続けてもアプリを使えなくするだけであるため、該当キーごと削除して空リストから再開する。握りつぶす範囲は `on Exception` で受けた失敗だけで、`Error` は伝播させる。逆に**書き込みの失敗は握りつぶさない**（`setString` が false を返したら `UnknownException` を送出する）。成功扱いにすると、再起動時に初めてレビューの消失が発覚するためである。根拠は [ADR-0003](adr/0003-local-cache.md)。
+**破損した永続データの読み込みのみ、失敗を握りつぶして空として扱う**（`ReviewLocalStore.read()`）。保存済み JSON が壊れている状態はユーザー操作では復旧できず、エラーを出し続けてもアプリを使えなくするだけであるため、該当キーごと削除して空リストから再開する。握りつぶす範囲は **FormatException と ValidationException だけ**（DTO の CheckedFromJsonException は FormatException に揃えてから受ける）。それ以外の Exception はキーを消さず上位へ伝え、Error は伝播させる。逆に**書き込みの失敗は握りつぶさない**（`setString` が false を返したら `UnknownException` を送出する）。成功扱いにすると、再起動時に初めてレビューの消失が発覚するためである。根拠は [ADR-0003](adr/0003-local-cache.md)。
 
 ### フレームワークによる暗黙の再試行を無効化する
 
