@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../common_widgets/app_error_view.dart';
 import '../../../core/error/app_exception.dart';
 import '../../book_search/domain/book.dart';
 import '../domain/rating.dart';
@@ -11,18 +12,71 @@ import '../domain/review.dart';
 import '../domain/review_draft.dart';
 import 'review_list_controller.dart';
 
+/// `/reviews/:id/edit` の入口。URL の id からレビューを読み直してフォームへ渡す。
+///
+/// 遷移元から `extra` で [Review] を受け取らないのは、`extra` がディープリンクや
+/// 状態復元では復元されず null になるため。URL に id がある以上、画面は自分で
+/// 取得できる（ADR-0004）。
+class ReviewEditorLoader extends ConsumerWidget {
+  const ReviewEditorLoader({super.key, required this.reviewId});
+
+  final String reviewId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final review = ref.watch(reviewByIdProvider(reviewId));
+    return review.when(
+      loading: () => const _EditorPlaceholder(
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => _EditorPlaceholder(
+        child: AppErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(reviewByIdProvider(reviewId)),
+        ),
+      ),
+      data: (review) => ReviewEditorScreen.edit(existing: review),
+    );
+  }
+}
+
+/// 読み込み中・失敗時の枠。フォームと同じ AppBar を出し、戻る導線を絶やさない。
+class _EditorPlaceholder extends StatelessWidget {
+  const _EditorPlaceholder({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('レビューを編集')),
+      body: child,
+    );
+  }
+}
+
 /// F-02 レビューの登録／編集フォーム。
 ///
-/// - 検索結果から来た場合は [book] が渡され「新規作成」
-/// - 詳細から来た場合は [existing] が渡され「編集」
+/// 「新規作成」と「編集」でコンストラクタを分け、どちらの入力が要るかを型で示す。
+/// `assert` で「片方は非 null」を要求すると release ビルドでは検査が消え、
+/// 引数なしで開かれたときに null チェック例外で落ちる。引数の型
+/// （`Book this.book` / `Review this.existing`）で保証すればその穴が塞がる。
 class ReviewEditorScreen extends HookConsumerWidget {
-  const ReviewEditorScreen({super.key, this.book, this.existing})
-    : assert(book != null || existing != null, 'book か existing のいずれかが必要');
+  /// 検索結果の書籍から新規登録する。
+  const ReviewEditorScreen.create({super.key, required Book this.book})
+    : existing = null;
+
+  /// 読み込み済みのレビューを編集する。
+  const ReviewEditorScreen.edit({super.key, required Review this.existing})
+    : book = null;
 
   final Book? book;
   final Review? existing;
 
   bool get _isEditing => existing != null;
+
+  // create / edit のどちらかしか無く、参照する側が非 null であることを
+  // コンストラクタの型が保証している。
   String get _bookId => existing?.bookId ?? book!.id;
   String get _bookTitle => existing?.bookTitle ?? book!.title;
   String? get _thumbnail => existing?.bookThumbnailUrl ?? book?.thumbnailUrl;

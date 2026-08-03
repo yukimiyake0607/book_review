@@ -4,10 +4,19 @@ import '../core/error/app_exception.dart';
 
 /// エラー状態の共通表示。[AppException] を網羅的に分岐してメッセージと再試行を出し分ける。
 class AppErrorView extends StatelessWidget {
-  const AppErrorView({super.key, required this.error, this.onRetry});
+  const AppErrorView({
+    super.key,
+    required this.error,
+    this.onRetry,
+    this.retryLabel = '再試行',
+  });
 
   final Object error;
   final VoidCallback? onRetry;
+
+  /// [onRetry] のボタン表示。復帰手段が再取得でない場合に差し替える
+  /// （例: 解決できない遷移からホームへ戻る）。
+  final String retryLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +35,7 @@ class AppErrorView extends StatelessWidget {
               FilledButton.tonalIcon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('再試行'),
+                label: Text(retryLabel),
               ),
             ],
           ],
