@@ -59,4 +59,7 @@ Future<void> add(ReviewDraft draft) async {
 - `state.xxx.when(loading / error / data)` で描き分け、empty も明示的に扱う。
 - エラーは `AppErrorView`（`onRetry` 付き）で表示する。
 - 再利用・複雑な部分は private Widget クラス（`_BookTile` 等）へ抽出する。ビルダー関数（`_buildXxx`）にしない。
-- 画面遷移は `context.push(AppRoute.xxx, extra: ...)`。パス文字列を直書きしない。
+- 画面遷移は `context.push(AppRoute.xxx)`。パス文字列を直書きしない。
+- `extra` は **URL から復元できない値だけ**に使う（検索結果の `Book` など永続化していないもの）。URL に id があるなら `extra` に頼らず Provider から引き直す。`extra` はディープリンクや状態復元では復元されないため（ADR-0004）。
+- 受け取りは `as Xxx?` ではなく `is Xxx` で確かめる。素のキャストは型不一致を `TypeError`（`Error` 系）にしてしまい、外部入力でバグ扱いのクラッシュを起こす。
+- 画面の必須入力は `assert` ではなくコンストラクタの型で保証する（`ReviewEditorScreen.create` / `.edit`）。`assert` は release ビルドで消えるため、引数なしで開かれた経路を守れない。

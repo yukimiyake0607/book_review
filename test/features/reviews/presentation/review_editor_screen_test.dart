@@ -12,7 +12,7 @@ void main() {
         // アプリ（bootstrap）と同じ設定で動かす（ADR-0007）。
         retry: noRetry,
         child: MaterialApp(
-          home: ReviewEditorScreen(
+          home: ReviewEditorScreen.create(
             book: Book(
               id: 'b1',
               title: 'Clean Architecture',

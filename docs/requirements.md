@@ -3,7 +3,7 @@
 | 項目 | 内容 |
 |---|---|
 | ドキュメント種別 | 要件定義書（docs/requirements.md） |
-| バージョン | 1.4 |
+| バージョン | 1.5 |
 | 作成日 | 2026-07-27 |
 | 更新日 | 2026-08-03 |
 | 作成者 | Yuki Miyake（[@yukimiyake0607](https://github.com/yukimiyake0607)） |
@@ -160,7 +160,7 @@ ReviewDraft … 新規・更新入力（id を持たない）
 | 種別 | 対象 |
 |---|---|
 | unit | ユースケース（保存の create/update 分岐）、ドメインロジック（`Rating`）、DTO⇄ドメインのマッピング、エラー分岐、レビュー CRUD のローカル永続化 |
-| widget | 検索画面（loading / error / empty / success）、レビュー登録フォームのバリデーション |
+| widget | 検索画面（loading / error / empty / success）、レビュー登録フォームのバリデーション、URL から直接開いたときの遷移（ディープリンク・未定義パス） |
 | integration | 「検索 → レビュー登録 → 一覧反映」のコアフロー1本 |
 
 外部 API はフェイクリポジトリに差し替え、ネットワークに依存せずテストする。レビューの Controller は「書き込み成功後に一覧反映／失敗時は一覧不変」を検証する（楽観的更新は対象外）。
@@ -184,5 +184,6 @@ ReviewDraft … 新規・更新入力（id を持たない）
 | #20 | README のスクリーンショット・操作デモ整備 |
 | 本書 v1.3 | 実装との乖離を解消（デモモード反映、対応OS・CI 記述の実態合わせ、認証方針を ADR-0010 化、未使用 `page` 引数の削除、mapper / CRUD / loading テストの追加） |
 | 本書 v1.4 | `.cursor/rules` と実装の乖離を解消（レビュー契約の遺物 `forceRefresh` / `cachedReviews` と到達しないフォールバックの削除、infrastructure 境界での例外変換の徹底、永続データの `Rating.parse` 化、lib 内 import の相対統一、Provider 宣言位置を ADR-0002 に明文化） |
+| 本書 v1.5 | ルート契約の是正（`extra` の生キャスト排除、編集画面を URL の `id` から復元、`errorBuilder` 追加、フォームの必須入力を `assert` から型へ、ADR-0004 に `extra` の使いどころを追記） |
 
 > Should（F-04/F-05）は余力に応じて実施する。本書 v1.4 時点では未実装。

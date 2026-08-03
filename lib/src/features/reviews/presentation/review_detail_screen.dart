@@ -29,10 +29,9 @@ class ReviewDetailScreen extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               tooltip: '編集',
-              onPressed: () => context.push(
-                AppRoute.reviewEdit(reviewId),
-                extra: review.value,
-              ),
+              // 対象は URL の id で決まる。編集画面が同じ id から引き直すため、
+              // extra で Review を渡さない（ADR-0004）。
+              onPressed: () => context.push(AppRoute.reviewEdit(reviewId)),
             ),
         ],
       ),
