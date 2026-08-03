@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   quality-gate:
-    name: analyze / format / test / build
+    name: analyze / custom_lint / format / test / build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,7 +31,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 生成物（*.g.dart / *.freezed.dart）はコミットしないため CI で再生成する
+      # 生成物（*.g.dart / *.freezed.dart）はコミットしないため CI で再生成する。
+      # build_runner 2.15 で --delete-conflicting-outputs は廃止された（衝突は自動解決される）。
       - name: Generate code
         run: dart run build_runner build
 

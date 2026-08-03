@@ -81,11 +81,31 @@ presentation ── application ── domain ◄── infrastructure
 | ------- | ----------------------------------------------- |
 | フレームワーク | Flutter / Dart（`mise` でバージョン固定）                 |
 | 状態管理    | Riverpod（`@riverpod` コード生成 / AsyncValue 中心）     |
+| Widget ローカル状態 | flutter_hooks（画面内で完結する入力状態のみ。共有・永続化される状態は Riverpod） |
 | ルーティング  | go_router                                       |
 | モデル     | freezed / json_serializable（DTO）                |
 | ネットワーク  | dio（手書き）+ Google Books API                      |
 | ローカル保存  | shared_preferences                              |
-| CI      | GitHub Actions（analyze → format → test → build） |
+| CI      | GitHub Actions（build_runner → analyze → custom_lint → format → test → build） |
+
+## AI 活用の範囲
+
+このリポジトリは AI コーディング支援を使って開発しています。何を AI に任せ、何を自分で判断・検証したかを明示します。
+
+| 区分 | 内容 |
+| --- | --- |
+| AI に任せた | Widget のボイラープレート、DTO / mapper の定型実装、テストケースの洗い出し、命名や文章の推敲、機械的なリファクタの適用 |
+| 自分で判断した | 層の切り方と依存の向き、パッケージ選定、`AppException` の型設計、SoT をどこに置くか、スコープに入れない機能の線引き |
+| 自分で検証した | 生成されたコードをレビューして採否を決め、CI（analyze / custom_lint / format / test / build）と手動の動作確認を通す |
+
+**AI の提案や自分の初期実装を撤回した判断**を、代替案・却下理由つきで [docs/adr/](docs/adr/) に残しています。設計判断が残っているかどうかが、このリポジトリで一番見てほしい部分です。
+
+- **全操作に UseCase を置く構成をやめた** — 単純委譲の UseCase は層を1枚増やすだけだったため、意図の集約が必要な操作（保存の create / update 分岐）だけに限定した（[ADR-0002](docs/adr/0002-layered-architecture.md)）
+- **楽観的更新を実装後に撤回した** — ロールバックの複雑さが、ローカル保存の速度で得られる体感差に見合わなかった（[ADR-0008](docs/adr/0008-book-search-api.md) 方針B）
+- **OpenAPI スキーマ駆動を撤回した** — モックサーバ前提だと clone しても動かせず、デモとしての目的と衝突した（[ADR-0006](docs/adr/0006-schema-driven.md) Superseded → [ADR-0008](docs/adr/0008-book-search-api.md)）
+- **Riverpod 3 の既定挙動を無効化した** — Provider の自動リトライが「ユーザーが再試行を決める」エラー設計と衝突するため、`ProviderScope(retry: noRetry)` で切った（[ADR-0007](docs/adr/0007-error-handling.md)）
+
+AI に一貫した実装をさせるため、アーキテクチャと層ごとの規約は [.cursor/rules/](.cursor/rules/) に明文化しています。PR には [テンプレート](.github/pull_request_template.md)の「AI活用メモ」欄で、提案の採否を都度残しています。
 
 ## テスト
 
@@ -102,7 +122,7 @@ flutter test
 
 | 項目         | 現状・方針                                                  |
 | ---------- | ------------------------------------------------------ |
-| 認証・認可      | スコープ外。導入時はトークン管理＋`flutter_secure_storage` を想定し ADR 化予定 |
+| 認証・認可      | スコープ外。導入する場合の置き場所（`flutter_secure_storage` / go_router の `redirect` / dio の Interceptor）は [ADR-0010](docs/adr/0010-auth-strategy.md) に記載 |
 | 複数端末同期     | スコープ外。レビューは端末ローカルのみ                                    |
 | 国際化（i18n）  | 日本語のみ。多言語化は ARB での対応を想定                                |
 | アクセシビリティ   | 基本的な `Semantics` のみ。WCAG 準拠までは未対応                      |
@@ -127,7 +147,7 @@ mise trust
 mise install
 
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 
 flutter run
 ```

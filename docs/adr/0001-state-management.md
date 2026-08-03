@@ -23,6 +23,25 @@ DI は Provider のオーバーライドで行い、テスト時にリポジト�
 
 実務の多くのプロジェクトはコード生成方式を採用しているため、本リポジトリでもそれに揃える。
 
+## 状態の置き場所を2つに分ける（flutter_hooks の併用）
+
+`hooks_riverpod` を使い、**状態の寿命で置き場所を分ける**。
+
+| 状態の種類 | 置き場所 | 例 |
+| --- | --- | --- |
+| 画面をまたいで共有する／永続化される | Riverpod（`@riverpod` Controller） | レビュー一覧、検索結果 |
+| その画面を閉じたら捨ててよい | `flutter_hooks` | レビュー編集フォームの評価・感想・読了日・保存中フラグ |
+
+レビュー編集フォームのような「画面内で完結する入力状態」まで Provider に載せると、
+画面を離れたときの破棄と `family` のキー設計を毎回考えることになり、寿命の管理が
+Riverpod 側に漏れる。かといって `StatefulWidget` に戻すと `TextEditingController` の
+`dispose` を手書きすることになる。`useState` / `useTextEditingController` は
+どちらのコストも払わずに済むため、ローカル状態はここに寄せる。
+
+`hooks_riverpod` は Riverpod 本体と同一メンテナのパッケージで、`HookConsumerWidget`
+として両者を1つの Widget で扱える。状態管理ライブラリを2つ併用しているのではなく、
+**Riverpod の購読と Widget ローカル状態という別々の関心を、別々の道具で扱っている**。
+
 ## ツールチェーンの固定
 
 このリポジトリは `mise` で **Flutter を固定**している（`mise.toml`。`fvm` は使わず `mise` に一本化）。
