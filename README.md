@@ -34,7 +34,7 @@ clone して `flutter run` するだけで全画面を触れます（デモモ�
 
 4層のレイヤードアーキテクチャを、機能単位（feature-first）のディレクトリに配置しています。これが普遍的にベストな構成だと考えているわけではなく、この規模（画面4つ・外部 API ひとつ・ローカル永続化のみ）に対して、依存の向きの一貫性とテストのしやすさが釣り合う塩梅として選んだものです。
 
-```
+```text
 presentation ── application ── domain ◄── infrastructure
   UI/状態        ユースケース      中核       API/DB実装
                                 ▲──────────────┘
@@ -49,7 +49,7 @@ presentation ── application ── domain ◄── infrastructure
 
 `lib/src/features/<feature>` の下に4層をそのままディレクトリとして切ります。新しい機能も同じ形で作り、機能ごとに独自の構造を作りません。
 
-```
+```text
 lib
 ├── main.dart          # デモモード（既定のエントリポイント）
 ├── main_dev.dart      # 実 API（APIキーあり）
@@ -123,7 +123,7 @@ domain のエンティティは `freezed` で不変にし、外部とやり取�
 
 失敗は sealed な [AppException](lib/src/core/error/app_exception.dart) の階層で表します。
 
-```
+```text
 sealed AppException
 ├── NetworkException     接続失敗・タイムアウト
 ├── NotFoundException    404
