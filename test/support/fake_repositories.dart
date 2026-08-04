@@ -10,7 +10,7 @@ import 'package:book_review/src/features/reviews/domain/review_repository.dart';
 /// 指定された失敗をそのまま送出する。
 ///
 /// 失敗を `Object` で受けるのは、本実装が `AppException` だけでなく `Error`
-/// （＝コードのバグ）も投げうるため（ADR-0007）。`throw` 文だと
+/// （＝コードのバグ）も投げうるため。`throw` 文だと
 /// `only_throw_errors` に触れるので [Error.throwWithStackTrace] を使う。
 Never _throwAsIs(Object error) =>
     Error.throwWithStackTrace(error, StackTrace.current);

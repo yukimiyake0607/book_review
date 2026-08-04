@@ -7,7 +7,7 @@ import 'package:book_review/src/features/reviews/infrastructure/dto/review_dto.d
 import 'package:book_review/src/features/reviews/infrastructure/review_mapper.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// レビューは shared_preferences が SoT（ADR-0003）なので、
+/// レビューは shared_preferences が SoT なので、
 /// domain ⇄ DTO ⇄ JSON の往復で情報が落ちると、そのまま保存データの欠損になる。
 void main() {
   Review buildReview({

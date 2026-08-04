@@ -50,7 +50,7 @@ void main() {
 
   test('保存値が文字列でなくても空リストになり、キーが消える', () async {
     // 旧フォーマットが残っているケース。getString だと TypeError（Error 系）で
-    // 落ちるため、型は自分で確かめて「破損データ」として扱う（ADR-0007）。
+    // 落ちるため、型は自分で確かめて「破損データ」として扱う。
     SharedPreferences.setMockInitialValues({'review_v1': 42});
     final prefs = await SharedPreferences.getInstance();
 

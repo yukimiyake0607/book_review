@@ -9,7 +9,7 @@ void main() {
   testWidgets('評価を選ばずに登録するとバリデーションで止まる', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
-        // アプリ（bootstrap）と同じ設定で動かす（ADR-0007）。
+        // アプリ（bootstrap）と同じ設定で動かす。
         retry: noRetry,
         child: MaterialApp(
           home: ReviewEditorScreen.create(

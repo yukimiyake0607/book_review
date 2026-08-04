@@ -15,7 +15,7 @@ import '../../../support/fake_repositories.dart';
 Future<void> _pump(WidgetTester tester, FakeBookRepository fake) async {
   await tester.pumpWidget(
     ProviderScope(
-      // アプリ（bootstrap）と同じ設定で動かす（ADR-0007）。
+      // アプリ（bootstrap）と同じ設定で動かす。
       retry: noRetry,
       overrides: [bookRepositoryProvider.overrideWithValue(fake)],
       child: const MaterialApp(home: BookSearchScreen()),
@@ -152,7 +152,7 @@ void main() {
 
     test('Error は AsyncError に載せず、そのまま送出する', () async {
       // Error はバグなので UI の error 状態へ流さず、グローバルハンドラへ
-      // 伝播させる（ADR-0007）。guard が飲み込まないことを固定する。
+      // 伝播させる。guard が飲み込まないことを固定する。
       final container = containerWith(
         FakeBookRepository(error: StateError('バグ')),
       );

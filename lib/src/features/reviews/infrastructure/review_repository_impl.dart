@@ -18,7 +18,7 @@ ReviewRepository reviewRepository(Ref ref) {
 /// [ReviewRepository] のローカル実装。
 ///
 /// `shared_preferences`（[ReviewLocalStore]）だけで CRUD を完結させる。サーバが
-/// 無いため、id の採番・タイムスタンプ・並び順はこの層の責務になる（ADR-0008）。
+/// 無いため、id の採番・タイムスタンプ・並び順はこの層の責務になる。
 class ReviewRepositoryImpl implements ReviewRepository {
   ReviewRepositoryImpl(this._store);
 

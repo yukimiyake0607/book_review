@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 /// 報告に添える出所（DevTools やログでアプリ由来だと分かるようにする）。
 const _library = 'book_review';
 
-/// 捕捉されなかった失敗の受け口を配線する（ADR-0007）。
+/// 捕捉されなかった失敗の受け口を配線する。
 ///
 /// 本アプリは「想定される失敗」だけを `Exception`（sealed な `AppException`）として
 /// 型付けし、`Error`（プログラムのバグ）は catch せず上位へ伝播させる。伝播した
@@ -39,7 +39,7 @@ void installGlobalErrorHandlers() {
 /// ため送信先を持たず、既定の出力（コンソール / DevTools）だけを残している。
 /// 送信の有無ではなく「捕捉されなかった失敗をどこに集めるか」を設計として示す
 /// ことが目的で、後から足す1行の位置をここに限定している
-/// （README「監視・クラッシュ収集」/ ADR-0007）。
+/// （README「監視・クラッシュ収集」）。
 void _report(FlutterErrorDetails details) {
   FlutterError.presentError(details);
 }

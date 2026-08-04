@@ -12,7 +12,7 @@ globs: lib/**/*.dart
 - `sealed class AppException implements Exception`（ユーザー向け `message` を持つ）。
 - 具体は `final class`：`NetworkException` / `NotFoundException` / `ServerException` / `ValidationException` / `UnknownException`。
 
-## Exception と Error を分ける（ADR-0007）
+## Exception と Error を分ける
 
 | 失敗の性質 | 型 | 扱い |
 |---|---|---|

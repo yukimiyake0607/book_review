@@ -1,6 +1,6 @@
 import 'app_exception.dart';
 
-/// `AsyncValue.guard` に渡す捕捉条件（ADR-0007）。
+/// `AsyncValue.guard` に渡す捕捉条件。
 ///
 /// `AsyncValue.guard` は既定で `Object` を捕まえるため、何も渡さないと
 /// `Error`（＝コードのバグ）まで `AsyncValue.error` に載り、画面に「予期しない
