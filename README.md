@@ -183,12 +183,6 @@ Cursor / VS Code なら **dev (debug)** を選択（`launch.json` が `dart_defi
 
 `--dart-define` で渡した値はビルド成果物に含まれます。配布用ビルドを作る場合は、ローカル開発用とは別に、Books API 専用かつ対象 iOS bundle ID に制限したキーを用意してください。
 
-## コードの読み方
-
-1. [docs/requirements.md](docs/requirements.md) でスコープを把握する
-2. [docs/adr/](docs/adr/) で「なぜそう決めたか」を読む
-3. 1本の動線を縦に読む: 検索 UI → Controller → Repository → DTO/mapper → Google Books / レビューなら SharedPreferences
-
 ## ライセンス
 
 MIT License
