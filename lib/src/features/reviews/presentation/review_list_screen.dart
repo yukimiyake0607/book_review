@@ -9,7 +9,7 @@ import '../../../routing/app_router.dart';
 import '../domain/review.dart';
 import 'review_list_controller.dart';
 
-/// F-03 レビュー一覧画面（ホーム）。新着順で表示し、プルリフレッシュで再取得する。
+/// レビュー一覧画面（ホーム）。新着順で表示し、プルリフレッシュで再取得する。
 class ReviewListScreen extends ConsumerWidget {
   const ReviewListScreen({super.key});
 

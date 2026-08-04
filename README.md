@@ -6,10 +6,10 @@
 ## アプリ概要
 
 読んだ本を検索して登録し、評価・感想を記録する Flutter（iOS）アプリです。
-要件定義はこちら：[docs/requirements.md](docs/requirements.md)
+
+機能の多さではなく**設計判断とその根拠**を示すことを目的にしたリポジトリです。読書記録という平易な題材を選んだのは、題材の理解にコストをかけず、アーキテクチャ・状態設計・エラーハンドリング・テストに注意を向けてもらうためです。そのため機能は意図的に少数へ絞り、代わりに各機能を domain 層から UI まで一貫して作り込んでいます。
 
 clone して `flutter run` するだけで全画面を触れます（書籍検索は同梱データで動くデモモードのため、APIキーは不要です）。詳しくは[セットアップ](#セットアップ)を参照してください。
-
 
 ### 機能
 
@@ -47,7 +47,7 @@ presentation ── application ── domain ◄── infrastructure
 
 過剰にしないための線引きも決めています。**層はこの4つで打ち止め**、**application 層は任意**です。分岐や複数ソースの統合など実質的な意図があるときだけユースケースを置き、単純な委譲なら presentation がリポジトリを直接呼びます。レビュー保存は `id` の有無で create / update を振り分けるので [SaveReviewUseCase](lib/src/features/reviews/application/save_review_use_case.dart) を置いていますが、書籍検索は委譲するだけなので `BookSearchController` が `BookRepository` を直接呼んでいます。「将来の拡張の口」を理由に空の委譲クラスは作りません。
 
-### ディレクトリ名やファイル名について
+### ディレクトリ構成について
 
 `lib/src/features/<feature>` の下に4層をそのままディレクトリとして切ります。新しい機能も同じ形で作り、機能ごとに独自の構造を作りません。
 
@@ -119,6 +119,8 @@ Widget ローカルの状態は `flutter_hooks` に置き、**状態の寿命**�
 
 レビューはサーバを持たず、端末内の `shared_preferences` が単一の情報源（SoT）です。DTO の JSON 配列として保存し、読み書きは [ReviewLocalStore](lib/src/features/reviews/infrastructure/review_local_store.dart) に閉じ込めています。
 
+drift（SQLite）も候補でしたが、ローカルデータの要件が「1つのリストを読み書きする」だけなので、スキーマ定義・生成・マイグレーションの運用コストが便益を上回ると判断しました（フィルタやソートを本格化する時点での第一候補として残しています）。
+
 保存・削除では**楽観的更新とロールバックを行わず**、書き込みの完了を待ってから一覧へ反映します。ローカル書き込みはレイテンシが小さく先に UI を動かす必然性が薄いのに対して、仮 ID の差し込みと失敗時のロールバックは確実にコードを増やすためです。失敗時は一覧を変えず、`AppException.message` を SnackBar で伝えます。
 
 モデルの作り分けもここに現れます。domain のエンティティは `freezed` で不変にし、表示用の派生値は getter で持たせます（`Book.authorsLabel`）。外部とやり取りする DTO は `json_serializable` で生成し、`toDomain()` / `toDto()` の extension だけが両者を行き来します。変換を1箇所に集約しているので、domain が JSON のキー名を知ることはありません。
@@ -168,6 +170,14 @@ final result = await AsyncValue.guard(
 レビューの永続化はデモモードでも本物の `shared_preferences` を使います。ローカル完結でキーも要らないので、偽装する理由がありません。
 
 実 API 側は手書きの `dio` クライアントで、コード生成のクライアントは使っていません。APIキーはリポジトリに直書きせず、`--dart-define-from-file=dart_defines.json` で注入します（`dart_defines.json` は `.gitignore` 済み）。
+
+### スコープ外にしたもの
+
+入れないと決めたものについても、入れる場合の置き場所までは決めています。
+
+- **認証・認可** — 単一ユーザー前提。導入するならトークンは `flutter_secure_storage`、判定は go_router の `redirect` 1箇所、付与とリフレッシュは dio の `Interceptor` に閉じる
+- **複数端末同期** — レビューは端末ローカルのみ。サーバを持たせる場合もローカル SoT は崩さず、同期先として後ろに足す
+- **検索結果のページネーション** — 1リクエスト20件固定。使わない拡張ポイント（`forceRefresh` のような引数）を `BookRepository` の契約に残さない方針で、必要になった時点で契約を広げる
 
 ## テスト
 
