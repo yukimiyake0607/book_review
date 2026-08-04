@@ -19,13 +19,10 @@ clone して `flutter run` するだけで全画面を触れます（書籍検�
 
 ### スクリーンショット
 
-#### レビュー
-
 | マイレビュー | レビュー登録 |
 | --- | --- |
 | <img src="docs/screenshots/review_list.png" width="300" alt="マイレビュー画面"> | <img src="docs/screenshots/review_create.png" width="300" alt="レビュー登録画面"> |
 
-#### 書籍検索
 
 | 初期 | 結果あり | 結果なし |
 | --- | --- | --- |
@@ -34,8 +31,6 @@ clone して `flutter run` するだけで全画面を触れます（書籍検�
 #### 操作デモ（書籍検索〜レビュー登録）
 
 <img src="docs/screenshots/search_to_review.gif" width="300" alt="書籍を検索してレビューを登録するまでの操作デモ">
-
-高画質版（mp4）：[docs/screenshots/search_to_review.mp4](docs/screenshots/search_to_review.mp4)
 
 ## 設計方針
 
