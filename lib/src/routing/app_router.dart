@@ -32,7 +32,7 @@ abstract final class AppRoute {
 /// go_router を供給する Provider。
 ///
 /// ルーティング定義を Riverpod 管理下に置くことで、将来 認証状態などに応じた
-/// リダイレクト（`redirect`）を Provider 経由で差し込めるようにしている（ADR-0004）。
+/// リダイレクト（`redirect`）を Provider 経由で差し込めるようにしている。
 @Riverpod(keepAlive: true)
 GoRouter goRouter(Ref ref) {
   return GoRouter(

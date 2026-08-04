@@ -20,7 +20,7 @@ ReviewDraft _draft() => ReviewDraft(
 ProviderContainer _container(FakeReviewRepository fake) {
   final container = ProviderContainer(
     // アプリ（bootstrap）と同じリトライ方針で動かす。既定のままだと Riverpod 3 が
-    // build の失敗を自動リトライし続け、AsyncError を観測できない（ADR-0007）。
+    // build の失敗を自動リトライし続け、AsyncError を観測できない。
     retry: noRetry,
     overrides: [reviewRepositoryProvider.overrideWithValue(fake)],
   );

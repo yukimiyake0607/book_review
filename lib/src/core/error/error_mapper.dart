@@ -8,7 +8,7 @@ import 'app_exception.dart';
 ///
 /// 引数を [Exception] に限っているのは、変換の対象が「想定される失敗」だけである
 /// ことを型で示すため。`Error`（＝コードのバグ）はリポジトリでも捕まえず、
-/// グローバルハンドラへ伝播させる（ADR-0007）。
+/// グローバルハンドラへ伝播させる。
 AppException mapDioException(Exception error) {
   if (error is AppException) {
     return error;

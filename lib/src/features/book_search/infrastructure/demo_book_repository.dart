@@ -50,7 +50,7 @@ class DemoBookRepository implements BookRepository {
   /// JSON の破損・構造不一致は「デモデータが使えない」状態でしかないため、
   /// infrastructure の境界で [UnknownException] に型付けする。一方でアセット自体の
   /// 欠落は Flutter が `FlutterError`（Error 系）で通知する。同梱漏れはビルドの
-  /// 不備＝バグなので捕まえず、グローバルハンドラへ伝播させる（ADR-0007）。
+  /// 不備＝バグなので捕まえず、グローバルハンドラへ伝播させる。
   Future<List<Book>> _load() async {
     try {
       final raw = await _bundle.loadString(assetPath);

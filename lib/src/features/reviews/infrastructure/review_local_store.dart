@@ -12,7 +12,7 @@ import 'review_mapper.dart';
 /// SharedPreferences へのレビュー一覧の読み書きを閉じ込める。
 ///
 /// キャッシュ（別に正本があり、失っても再取得できる控え）ではなく、レビューの
-/// 単一の情報源（SoT）そのものを保持する（ADR-0008）。ここを失うとデータは戻らない。
+/// 単一の情報源（SoT）そのものを保持する。ここを失うとデータは戻らない。
 ///
 /// キーにバージョン（v1）を含め、将来フォーマットを変えても衝突しにくくする。
 class ReviewLocalStore {
@@ -26,7 +26,7 @@ class ReviewLocalStore {
   /// 端末の保存値は外部入力なので、構造の不一致は素のキャスト（TypeError＝Error 系）
   /// ではなく [FormatException] / [ValidationException] として表し、それだけを
   /// 破損データとして破棄する。それ以外の Exception はキーを消さず上位へ伝播させる。
-  /// Error（＝コードのバグ）も握りつぶさない（ADR-0007）。
+  /// Error（＝コードのバグ）も握りつぶさない。
   List<Review> read() {
     try {
       // getString は内部で `as String?` するため、旧フォーマットで別の型が
@@ -80,7 +80,7 @@ class ReviewLocalStore {
           .catchError(
             (Object _) => false,
             // 見送るのは削除の失敗（Exception）だけ。Error はここでも握りつぶさず、
-            // 未処理の非同期エラーとしてグローバルハンドラへ渡す（ADR-0007）。
+            // 未処理の非同期エラーとしてグローバルハンドラへ渡す。
             test: (error) => error is Exception,
           ),
     );

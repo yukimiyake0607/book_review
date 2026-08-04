@@ -94,7 +94,7 @@ void main() {
   test('アセットの欠落は AppException にせず Error として伝播させる', () async {
     // 同梱漏れはデータの不備ではなくビルドの不備（＝バグ）で、Flutter も
     // FlutterError（Error 系）で通知する。握りつぶさずグローバルハンドラへ
-    // 届かせる方針のため、ここでは AppException に化けないことを固定する（ADR-0007）。
+    // 届かせる方針のため、ここでは AppException に化けないことを固定する。
     final repository = DemoBookRepository(
       assetPath: 'assets/demo/does_not_exist.json',
       latency: Duration.zero,

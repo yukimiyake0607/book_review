@@ -14,7 +14,7 @@ List<Object> _captureReports() {
   return reported;
 }
 
-/// アプリ（bootstrap）と同じ設定でオブザーバを効かせたコンテナ（ADR-0007）。
+/// アプリ（bootstrap）と同じ設定でオブザーバを効かせたコンテナ。
 ProviderContainer _observedContainer() {
   final container = ProviderContainer(
     retry: noRetry,

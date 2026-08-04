@@ -36,7 +36,7 @@ void main() {
     String? location,
   }) async {
     final container = ProviderContainer(
-      // アプリ（bootstrap）と同じ設定で動かす（ADR-0007）。
+      // アプリ（bootstrap）と同じ設定で動かす。
       retry: noRetry,
       overrides: [
         appEnvProvider.overrideWithValue(AppEnv.dev),
