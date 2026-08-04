@@ -5,7 +5,7 @@
 # `json['id'] as String` のような素のキャストで、外部 JSON の型不一致が
 # TypeError（Error 系）になる。本アプリは Error を「バグ」としてグローバル
 # ハンドラへ伝播させる方針のため、外部入力起因の失敗は Exception 側へ寄せる
-# 必要がある（ADR-0007）。
+# 必要がある。
 targets:
   $default:
     builders:

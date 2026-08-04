@@ -5,7 +5,7 @@ import 'review_draft.dart';
 ///
 /// 実装は infrastructure 層。失敗は `AppException`（sealed）で表現する。
 ///
-/// 永続化先は端末内のみで、これが単一の情報源（SoT）である（ADR-0008）。
+/// 永続化先は端末内のみで、これが単一の情報源（SoT）である。
 /// そのため「サーバから取り直す」「キャッシュを先に返す」に相当する契約は持たない。
 abstract interface class ReviewRepository {
   /// レビュー一覧を新着順（`createdAt` 降順）で取得する。

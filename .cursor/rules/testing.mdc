@@ -20,7 +20,7 @@ globs: test/**/*.dart
 - ネットワークに依存しない：`Repository` の interface を差し替える（`overrideWithValue` で Provider に注入）。
 - **フェイクとモックを使い分ける**。既定はインメモリのフェイク（`test/support/fake_repositories.dart`）で、「保存したら一覧に出る」のように**結果の状態**を確認する。`mocktail` の Mock を使うのは、**どのメソッドを呼んだかが検証対象そのもの**のときだけ（`SaveReviewUseCase` の create / update 振り分け）。フェイクを Mock 代わりに使って呼び出し回数を数え始めたら、フェイクが太っているサイン。
 - フェイクには**本物の実装に無い挙動を持たせない**。フェイクだけが持つ分岐を検証すると、本番では到達しないコードを「テスト済み」に見せてしまう。
-- Controller テストは `AsyncLoading → AsyncData / AsyncError` の遷移を検証する。レビューの保存・削除は「書き込み成功後に一覧反映／失敗時は一覧不変」を確認する（楽観的更新・ロールバックは対象外。ADR-0008 方針B）。
+- Controller テストは `AsyncLoading → AsyncData / AsyncError` の遷移を検証する。レビューの保存・削除は「書き込み成功後に一覧反映／失敗時は一覧不変」を確認する（楽観的更新・ロールバックは対象外）。
 - 同じロジックで入出力が異なるケースはテーブルドリブンで書く。
-- テストで `ProviderContainer` / `ProviderScope` を作るときは、アプリ（`bootstrap()`）と同じ `retry: noRetry` を渡す。渡さないと Riverpod 3 が `build` の失敗を自動リトライし、`AsyncError` を観測できないままタイムアウトする（ADR-0007）。
+- テストで `ProviderContainer` / `ProviderScope` を作るときは、アプリ（`bootstrap()`）と同じ `retry: noRetry` を渡す。渡さないと Riverpod 3 が `build` の失敗を自動リトライし、`AsyncError` を観測できないままタイムアウトする。
 - 実行は `flutter test`。CI ジョブ `analyze / format / test / build` を main の必須ステータスチェックに指定する（`riverpod_lint` は `analysis_options.yaml` の `plugins` 登録により analyze に含まれる）。

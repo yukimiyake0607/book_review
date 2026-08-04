@@ -16,7 +16,7 @@ import 'review_list_controller.dart';
 ///
 /// 遷移元から `extra` で [Review] を受け取らないのは、`extra` がディープリンクや
 /// 状態復元では復元されず null になるため。URL に id がある以上、画面は自分で
-/// 取得できる（ADR-0004）。
+/// 取得できる。
 class ReviewEditorLoader extends ConsumerWidget {
   const ReviewEditorLoader({super.key, required this.reviewId});
 

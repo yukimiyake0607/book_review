@@ -44,7 +44,7 @@ BookRepository bookRepository(Ref ref) =>            // 戻り値は domain の 
 ```
 
 - 上位層はこの Provider を `ref.read` / `ref.watch` するために infrastructure のファイルを import してよい。**受け取る型は interface のまま**なので、型の依存の向きは反転していない。
-- 別ファイル（DI 専用ファイル）に Provider だけを切り出すことはしない。実装を増減したときに宣言と実装が離れて追えなくなるコストの方が大きいと判断している（ADR-0002）。
+- 別ファイル（DI 専用ファイル）に Provider だけを切り出すことはしない。実装を増減したときに宣言と実装が離れて追えなくなるコストの方が大きいと判断している。
 - テストでの差し替えも `overrideWithValue` でこの Provider に対して行う。
 
 ## フィーチャーフォルダ構成

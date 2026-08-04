@@ -1,4 +1,4 @@
-/// Riverpod 3 の自動リトライを無効化するためのポリシー（Issue #9 / ADR-0007）。
+/// Riverpod 3 の自動リトライを無効化するためのポリシー（Issue #9）。
 ///
 /// Riverpod 3 は Provider の `build` 失敗時に指数バックオフ（最大10回）で
 /// 自動リトライする。本アプリは失敗を sealed [AppException] + `AppErrorView`

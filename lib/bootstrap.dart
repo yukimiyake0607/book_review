@@ -22,10 +22,10 @@ Future<void> bootstrap(AppEnv env) async {
 
   runApp(
     ProviderScope(
-      // Riverpod 3 の自動リトライを全体で無効化する（Issue #9 / ADR-0007）。
+      // Riverpod 3 の自動リトライを全体で無効化する（Issue #9）。
       retry: noRetry,
       // build 内の Error は Riverpod が AsyncError に変えて伝播を止めるため、
-      // この経路だけオブザーバでグローバルハンドラへ合流させる（ADR-0007）。
+      // この経路だけオブザーバでグローバルハンドラへ合流させる。
       observers: const [UncaughtProviderErrorObserver()],
       overrides: [
         appEnvProvider.overrideWithValue(env),

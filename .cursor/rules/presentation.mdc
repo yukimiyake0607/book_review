@@ -28,14 +28,14 @@ class BookSearchController extends _$BookSearchController {
 ```
 
 - 非同期は `AsyncValue` で loading / error / data を表す。取得は `AsyncValue.guard` を使い、生の try/catch を書かない。
-- `AsyncValue.guard` には必ず `onlyAppException`（`core/error/guard_policy.dart`）を渡す。`Error` は UI に見せる失敗ではなく、rethrow してグローバルハンドラへ届かせる（ADR-0007）。
+- `AsyncValue.guard` には必ず `onlyAppException`（`core/error/guard_policy.dart`）を渡す。`Error` は UI に見せる失敗ではなく、rethrow してグローバルハンドラへ届かせる。
 - 画面側の catch も `on AppException`。`on Object` で受けてバグを SnackBar に化かさない。
 - `AsyncNotifier` の `build()` では失敗をそのまま throw する（フレームワークが `AsyncError` にする）。ここで try/catch して代替値へ逃がさない。
 - ユースケースがある操作は UseCase Provider を、単純な取得/委譲は repository Provider を `ref.read` で呼ぶ。**受け取る型は domain の interface**（`BookRepository` 等）で、実装クラス型は持たない（Provider を読むための import は可。architecture.mdc「Provider の宣言位置」）。
 
 ## レビューの保存・削除（書き込み完了後に反映）
 
-楽観的更新・ロールバックは行わない（ADR-0008 方針B）。
+楽観的更新・ロールバックは行わない。
 
 ```dart
 Future<void> add(ReviewDraft draft) async {
@@ -60,6 +60,6 @@ Future<void> add(ReviewDraft draft) async {
 - エラーは `AppErrorView`（`onRetry` 付き）で表示する。
 - 再利用・複雑な部分は private Widget クラス（`_BookTile` 等）へ抽出する。ビルダー関数（`_buildXxx`）にしない。
 - 画面遷移は `context.push(AppRoute.xxx)`。パス文字列を直書きしない。
-- `extra` は **URL から復元できない値だけ**に使う（検索結果の `Book` など永続化していないもの）。URL に id があるなら `extra` に頼らず Provider から引き直す。`extra` はディープリンクや状態復元では復元されないため（ADR-0004）。
+- `extra` は **URL から復元できない値だけ**に使う（検索結果の `Book` など永続化していないもの）。URL に id があるなら `extra` に頼らず Provider から引き直す。`extra` はディープリンクや状態復元では復元されないため。
 - 受け取りは `as Xxx?` ではなく `is Xxx` で確かめる。素のキャストは型不一致を `TypeError`（`Error` 系）にしてしまい、外部入力でバグ扱いのクラッシュを起こす。
 - 画面の必須入力は `assert` ではなくコンストラクタの型で保証する（`ReviewEditorScreen.create` / `.edit`）。`assert` は release ビルドで消えるため、引数なしで開かれた経路を守れない。
