@@ -13,7 +13,7 @@ clone して `flutter run` するだけで全画面を触れます（書籍検�
 
 ### 機能
 
-- **書籍検索** — [Google Books API](https://developers.google.com/books) を手書きの `dio` クライアントで呼び出し、キーワード検索
+- **書籍検索** — [Google Books API](https://developers.google.com/books) でキーワード検索（デモモードでは同梱データ）
 - **レビュー管理** — 評価（★）・感想・読了日を登録・編集・削除（端末内に永続化）
 - **一覧 / 詳細** — 登録したレビューを一覧・詳細で表示（プルリフレッシュ対応）
 
@@ -32,21 +32,142 @@ clone して `flutter run` するだけで全画面を触れます（書籍検�
 
 <img src="docs/screenshots/search_to_review.gif" width="300" alt="書籍を検索してレビューを登録するまでの操作デモ">
 
-## 設計方針
+## 設計
 
-## 技術スタック
+4層のレイヤードアーキテクチャを、機能単位（feature-first）のディレクトリに配置しています。これが普遍的にベストな構成だと考えているわけではなく、この規模（画面4つ・外部 API ひとつ・ローカル永続化のみ）に対して、依存の向きの一貫性とテストのしやすさが釣り合う塩梅として選んだものです。
 
+```
+presentation ── application ── domain ◄── infrastructure
+  UI/状態        ユースケース      中核       API/DB実装
+                                ▲──────────────┘
+                       domain の interface を infrastructure が実装
+```
 
-| 領域      | 技術                                              |
-| ------- | ----------------------------------------------- |
-| フレームワーク | Flutter / Dart（`mise` でバージョン固定）                 |
-| 状態管理    | Riverpod（`@riverpod` コード生成 / AsyncValue 中心）     |
-| Widget ローカル状態 | flutter_hooks（画面内で完結する入力状態のみ。共有・永続化される状態は Riverpod） |
-| ルーティング  | go_router                                       |
-| モデル     | freezed / json_serializable（DTO）                |
-| ネットワーク  | dio（手書き）+ Google Books API                      |
-| ローカル保存  | shared_preferences                              |
-| CI      | GitHub Actions（build_runner → analyze → format → test → build）。main の必須ステータスチェック |
+依存は presentation → application → domain の一方向で、infrastructure だけが矢印を逆に向けています。infrastructure は domain のリポジトリインターフェースを実装する側なので、domain は dio や shared_preferences、生成コードを一切知らないままでいられます。
+
+過剰にしないための線引きも決めています。**層はこの4つで打ち止め**、**application 層は任意**です。分岐や複数ソースの統合など実質的な意図があるときだけユースケースを置き、単純な委譲なら presentation がリポジトリを直接呼びます。レビュー保存は `id` の有無で create / update を振り分けるので [SaveReviewUseCase](lib/src/features/reviews/application/save_review_use_case.dart) を置いていますが、書籍検索は委譲するだけなので `BookSearchController` が `BookRepository` を直接呼んでいます。「将来の拡張の口」を理由に空の委譲クラスは作りません。
+
+### ディレクトリ名やファイル名について
+
+`lib/src/features/<feature>` の下に4層をそのままディレクトリとして切ります。新しい機能も同じ形で作り、機能ごとに独自の構造を作りません。
+
+```
+lib
+├── main.dart          # デモモード（既定のエントリポイント）
+├── main_dev.dart      # 実 API（APIキーあり）
+├── main_prod.dart
+├── bootstrap.dart     # エントリポイント共通の起動処理
+└── src
+    ├── core           # env / error / network / riverpod / storage / theme
+    ├── common_widgets # 機能をまたいで使う Widget
+    ├── routing        # go_router の定義
+    └── features
+        ├── book_search
+        │   ├── domain          # book.dart / book_repository.dart
+        │   ├── infrastructure  # book_repository_impl.dart / dto / mapper
+        │   └── presentation    # book_search_controller.dart / book_search_screen.dart
+        └── reviews
+            ├── application     # save_review_use_case.dart
+            ├── domain
+            ├── infrastructure
+            └── presentation
+```
+
+`core` は関心ごとに切り、`common_widgets` には実際に複数の機能から使われている Widget だけを置きます（`AppErrorView` は書籍検索・レビュー一覧・詳細・編集の各画面と、ルーティングのエラー画面から使われています）。1箇所でしか使わない Widget はその画面のファイル内の private クラス（`_BookTile` など）にとどめ、ビルダー関数（`_buildXxx`）にはしません。
+
+`lib` 配下の自パッケージ参照は相対 import に統一しています（`prefer_relative_imports` で機械的に強制）。`package:` と相対が混ざると、同じ型が別経路で二重に import されうるためです。
+
+### 状態管理と DI（Riverpod）
+
+状態管理と DI はすべて Riverpod のコード生成（`@riverpod`）に寄せ、手書きの `Provider` グローバル変数は作りません。宣言の形が1つに揃うほか、`riverpod_lint` を `analysis_options.yaml` の `plugins` に登録して `flutter analyze` から規約違反を検出できます。使い分けは2つだけです。
+
+- 状態を持つものは `@riverpod class Xxx extends _$Xxx`。非同期状態は `AsyncValue` で表す
+- 状態を持たない依存（リポジトリ・ユースケース）は `@Riverpod(keepAlive: true)` の関数型 Provider
+
+Controller は原則 autoDispose で、例外は `ReviewListController` だけです（一覧はホームと詳細の両方から参照され、破棄して読み直しても同じローカルデータを読むだけなので `keepAlive`）。理由はクラスの DartDoc に書く決まりにして、「なんとなく消えると困る」で keepAlive が増えないようにしています。
+
+**リポジトリを供給する Provider は、実装と同じファイルに置き、戻り値の型は domain のインターフェースにします。**
+
+```dart
+// lib/src/features/book_search/infrastructure/book_repository_impl.dart
+@Riverpod(keepAlive: true)
+BookRepository bookRepository(Ref ref) {
+  if (ref.watch(appEnvProvider).useDemoData) {
+    return DemoBookRepository();
+  }
+  return BookRepositoryImpl(ref.watch(dioProvider));
+}
+```
+
+この結果、presentation / application は Provider を読むために infrastructure のファイルを import します。import の矢印だけを見ると層をまたいで見えますが、受け取る型は `BookRepository` のままで、実装クラスは上位層に型としても変数としても現れません。依存性逆転は「どのファイルを読むか」ではなく「どの型に依存するか」で判定しています。
+
+Provider だけを DI 専用ファイルへ切り出す構成も考えましたが採りませんでした。import の見た目は層構造どおりになる一方、「どの実装が供給されるか」を知るのに常に2ファイルを往復することになります。この Provider の中身（デモと実 API の分岐）は設計上の要点そのものなので、実装の隣にあるほうが追いやすいと判断しました。テストでの差し替えも、この Provider に `overrideWithValue` でフェイクを渡す形に統一しています。
+
+Widget ローカルの状態は `flutter_hooks` に置き、**状態の寿命**で置き場所を分けています。画面をまたぐ・永続化されるもの（レビュー一覧、検索結果）は Riverpod、画面を閉じたら捨ててよいもの（レビュー編集フォームの評価・感想・読了日・保存中フラグ）は hooks です。フォームの入力状態まで Provider に載せると、離脱時の破棄と `family` のキー設計を毎回考えることになり、寿命の管理が Riverpod 側に漏れます。かといって `StatefulWidget` に戻すと `TextEditingController` の `dispose` を手書きすることになります。状態管理を2つ併用しているのではなく、Riverpod の購読と Widget ローカル状態という別々の関心を別々の道具で扱っています。
+
+生成コード（`*.g.dart` / `*.freezed.dart`）はコミットせず、ローカルと CI の `dart run build_runner build` で再生成します。生成物のレビューやコンフリクトで差分が汚れるのを避け、代わりに「再生成できること」を CI で毎回保証しています。
+
+### ルーティング（go_router）
+
+ルーター定義は `goRouterProvider` として Riverpod 管理下に置いています。今は使っていませんが、認証を入れる場合に `redirect` から認証状態の Provider を参照できるようにするためです。遷移先のパスは [AppRoute](lib/src/routing/app_router.dart) に集約し、文字列リテラルを画面側に散らしません。
+
+**`extra` は URL から復元できない値にだけ使います。** `GoRouterState.extra` は URL に乗らないため、ディープリンクやプロセス再生成の後には復元されません。`extra` を前提にした画面は「アプリ内から遷移したときだけ動く画面」になります。そのため `/reviews/:id` と `/reviews/:id/edit` は URL の id から画面が自分でレビューを引き直し、`/reviews/new` だけは永続化していない検索結果の `Book` を `extra` で運びます。編集画面は入口の Widget（`ReviewEditorLoader`）が id を解決してから、解決済みの値をフォームへ渡します。フォーム側は hooks で初期値を組み立てるので、読み込み前に構築すると初期値が空のまま固定されてしまうためです。
+
+`extra` の受け取りは `as Book?` ではなく `is Book` で確かめます。素のキャストは型不一致を `TypeError`（`Error` 系）にしてしまい、外部から与えられた値で「コードのバグ」扱いのクラッシュを起こすためです（後述のエラー設計）。値が無い遷移と未定義のパスは、どちらもホームへの導線を持つ画面に集約しています。ディープリンクで直接開かれると戻り先が無いので、行き止まりを作らないようにするためです。
+
+### データの永続化（shared_preferences を単一の情報源にする）
+
+レビューはサーバを持たず、端末内の `shared_preferences` が単一の情報源（SoT）です。DTO の JSON 配列として保存し、読み書きは [ReviewLocalStore](lib/src/features/reviews/infrastructure/review_local_store.dart) に閉じ込めています。
+
+保存・削除では**楽観的更新とロールバックを行わず**、書き込みの完了を待ってから一覧へ反映します。ローカル書き込みはレイテンシが小さく先に UI を動かす必然性が薄いのに対して、仮 ID の差し込みと失敗時のロールバックは確実にコードを増やすためです。失敗時は一覧を変えず、`AppException.message` を SnackBar で伝えます。
+
+モデルの作り分けもここに現れます。domain のエンティティは `freezed` で不変にし、表示用の派生値は getter で持たせます（`Book.authorsLabel`）。外部とやり取りする DTO は `json_serializable` で生成し、`toDomain()` / `toDto()` の extension だけが両者を行き来します。変換を1箇所に集約しているので、domain が JSON のキー名を知ることはありません。
+
+### エラー設計（sealed AppException）
+
+失敗は sealed な [AppException](lib/src/core/error/app_exception.dart) の階層で表します。
+
+```
+sealed AppException
+├── NetworkException     接続失敗・タイムアウト
+├── NotFoundException    404
+├── ServerException      5xx / 429 / 403
+├── ValidationException  入力不正 / 400
+└── UnknownException     それ以外
+```
+
+sealed なので UI 側の `switch` は分岐漏れがコンパイルエラーになります（[AppErrorView](lib/src/common_widgets/app_error_view.dart)）。新しい失敗種別が必要になったら enum の値を増やすのではなく `final class` を追加し、網羅性の恩恵を受け続けられるようにしています。
+
+いちばん意識して線を引いたのは、**`Exception` と `Error` を分ける**ことです。通信断・不正な入力・破損した保存データは起こりうる失敗なので `Exception` として扱い、infrastructure の境界で `AppException` に型付けして UI で見せます（HTTP は `mapDioException`）。一方、型の取り違え・null 参照・アセットの同梱漏れはコードのバグなので `Error` のまま、どの層でも捕まえずグローバルハンドラまで伝播させます。
+
+そのため catch は既定で `on Exception` にしています。`on Object` や on 句なしの catch を書くと、バグまで `UnknownException`＝「予期しないエラーが発生しました。」に化けます。ユーザーは復旧できず、開発者にも痕跡が残らない、いちばん直したい失敗がいちばん見えなくなる状態です。
+
+`AsyncValue.guard` は既定で `Object` を捕まえるので、そのままでは `Error` も `AsyncValue.error` に載ります。捕捉条件 [onlyAppException](lib/src/core/error/guard_policy.dart) を渡し、想定内の失敗だけを状態に載せて残りは rethrow させます。
+
+```dart
+final result = await AsyncValue.guard(
+  () => _repository.search(trimmed),
+  onlyAppException,
+);
+```
+
+伝播した `Error` の受け口は [installGlobalErrorHandlers()](lib/src/core/error/global_error_handler.dart) の1箇所に集約し、`bootstrap()` で `runApp` より前に配線します。
+
+実務であればFirebase Crashlyticsなどへの送信をしますが、今回は実装していません。プロジェクト作成・各プラットフォームの設定ファイル・dSYM のアップロードまで含めると、このリポジトリで見せたい設計判断から焦点がぶれるためです。代わりに「後から足す1行の位置が1箇所に定まっている」ところまでを設計として示しています。
+
+`Result<T, AppException>` のような型は導入していません。非同期の loading / error / data はすでに `AsyncValue` が表現できるので、両方を持つと状態が二重管理になります。**非同期は `AsyncValue`、失敗の種類は sealed 型**という役割分担にとどめ、同期的なドメイン検証（`Rating.parse`）は `ValidationException` の送出で表します。
+
+### デモモードと Flavor
+
+環境の切り替えは、ネイティブのビルドフレーバーではなく**エントリポイント**で行います。`main.dart` / `main_dev.dart` / `main_prod.dart` がそれぞれ [AppEnv](lib/src/core/env/app_env.dart) の定数を選び、共通の `bootstrap()` に渡して `appEnvProvider` に注入します。iOS / Android / CI のいずれでも追加のネイティブ設定なしに動き、環境差分が1つの型に集まるためです。
+
+既定の `main.dart` は `Flavor.demo` で起動し、**書籍検索だけ**を同梱データ（`assets/demo/`）に差し替えます。clone して `flutter run` するだけで全画面を触れる状態にするためで、APIキーの発行が「触るのをやめる理由」になるのを避けたかったからです。
+
+差し替えが起きるのは、先に挙げた `bookRepositoryProvider` の中だけです。`DemoBookRepository` は domain の `BookRepository` を実装し、同梱した実レスポンスを**実 API 実装と同じ DTO / mapper** に通して `Book` へ変換します。`BookSearchController` はどちらの実装が供給されているか知りませんし、知る必要もありません。冒頭に書いた依存性逆転が実際に効いているのはここです。
+
+レビューの永続化はデモモードでも本物の `shared_preferences` を使います。ローカル完結でキーも要らないので、偽装する理由がありません。
+
+実 API 側は手書きの `dio` クライアントで、コード生成のクライアントは使っていません。APIキーはリポジトリに直書きせず、`--dart-define-from-file=dart_defines.json` で注入します（`dart_defines.json` は `.gitignore` 済み）。
 
 ## テスト
 
@@ -55,6 +176,10 @@ clone して `flutter run` するだけで全画面を触れます（書籍検�
 ```bash
 flutter test
 ```
+
+フェイクとモックは使い分けています。既定はインメモリのフェイクで「保存したら一覧に出る」のような**結果の状態**を確認し、`mocktail` の Mock を使うのは、どのメソッドを呼んだかが検証対象そのもののときだけです（`SaveReviewUseCase` の create / update の振り分け）。
+
+CI（GitHub Actions）では生成コードを再生成してから `analyze → format → test → build` を通し、このジョブを main の必須ステータスチェックに指定しています。ワークフローが赤のままマージできる状態にしないためです。
 
 ## スコープと非機能要件
 
