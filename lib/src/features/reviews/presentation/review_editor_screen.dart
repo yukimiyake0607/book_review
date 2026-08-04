@@ -55,7 +55,7 @@ class _EditorPlaceholder extends StatelessWidget {
   }
 }
 
-/// F-02 レビューの登録／編集フォーム。
+/// レビューの登録／編集フォーム。
 ///
 /// 「新規作成」と「編集」でコンストラクタを分け、どちらの入力が要るかを型で示す。
 /// `assert` で「片方は非 null」を要求すると release ビルドでは検査が消え、

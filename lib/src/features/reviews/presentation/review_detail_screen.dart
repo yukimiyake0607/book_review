@@ -11,7 +11,7 @@ import '../domain/rating.dart';
 import '../domain/review.dart';
 import 'review_list_controller.dart';
 
-/// F-03 レビュー詳細画面。編集・削除への入口を持つ。
+/// レビュー詳細画面。編集・削除への入口を持つ。
 class ReviewDetailScreen extends ConsumerWidget {
   const ReviewDetailScreen({super.key, required this.reviewId});
 

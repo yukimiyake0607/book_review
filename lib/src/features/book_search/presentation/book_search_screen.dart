@@ -8,7 +8,7 @@ import '../../../routing/app_router.dart';
 import '../domain/book.dart';
 import 'book_search_controller.dart';
 
-/// F-01 書籍検索画面。
+/// 書籍検索画面。
 ///
 /// loading / error / empty / success の各状態を明示的に描き分ける。
 class BookSearchScreen extends HookConsumerWidget {
@@ -106,7 +106,7 @@ class _BookTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: const Icon(Icons.chevron_right),
-      // 選択した書籍を持ってレビュー作成画面へ遷移する（F-02 へ接続）。
+      // 選択した書籍を持ってレビュー作成画面へ遷移する。
       onTap: () => context.push(AppRoute.reviewNew, extra: book),
     );
   }
